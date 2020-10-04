@@ -1,0 +1,4 @@
+./database.pkl
+.env
+__pycache__/
+pkl.py
