@@ -38,8 +38,8 @@ class InvStat(commands.Bot):
         if (target_channel := self.db[str(invite.guild.id)]["channel"]) is not None:
             if self.check_permission(invite.guild):
                 await self.update_server_cache(invite.guild)
-                embed = discord.Embed(title="Invite Created")
-                embed.description = f"Invite [{invite.code}]({invite.url}) has been created by `{str(invite.inviter)}`"
+                embed = discord.Embed(title="Invite Created", color=0x00ff7f)
+                embed.description = f"Invite [{invite.code}]({invite.url}) has been created by [{str(invite.inviter)}]({invite.url})"
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
                 embed.add_field(name="MaxUses", value=f"{invite.max_uses}")
                 embed.add_field(name="MaxAge", value=f"{invite.max_age}")
@@ -53,8 +53,8 @@ class InvStat(commands.Bot):
                 if invite.code in self.cache[str(invite.guild.id)]:
                     inviter = self.cache[str(invite.guild.id)][invite.code]['author']
                 await self.update_server_cache(invite.guild)
-                embed = discord.Embed(title="Invite Deleted")
-                embed.description = f"Invite [{invite.code}]({invite.url}) by `{await self.fetch_user(inviter) if inviter else 'Unknown'}` has been deleted."
+                embed = discord.Embed(title="Invite Deleted", color=0xff8c00)
+                embed.description = f"Invite [{invite.code}]({invite.url}) by [{await self.fetch_user(inviter) if inviter else 'Unknown'}]({invite.url}) has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
                 await bot.get_channel(target_channel).send(embed=embed)
 
@@ -64,37 +64,63 @@ class InvStat(commands.Bot):
                 old_invite_cache = self.cache[str(member.guild.id)]
                 new_invite_cache = await self.update_server_cache(member.guild)
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)
-                embed = discord.Embed(title="Member Joined")
+                embed = discord.Embed(title="Member Joined", color=0x00ffff)
                 embed.set_thumbnail(url=member.avatar_url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
                     if str(res[0]) not in self.db[str(member.guild.id)]["users"]:
                         self.db[str(member.guild.id)]["users"][str(res[0])] = {
+                            "to_all": {member.id},
                             "to": {member.id},
                             "from": None
                         }
                     else:
                         self.db[str(member.guild.id)]["users"][str(res[0])]["to"].add(member.id)
+                        self.db[str(member.guild.id)]["users"][str(res[0])]["to_all"].add(member.id)
                     # 招待された人の招待作成者を記録
                     if str(member.id) not in self.db[str(member.guild.id)]["users"]:
-                        self.db[str(member.guild.id)]["users"][str(res[0])] = {
+                        self.db[str(member.guild.id)]["users"][str(member.id)] = {
+                            "to_all": set(),
                             "to": set(),
                             "from": res[0]
                         }
                     else:
-                        self.db[str(member.guild.id)]["users"][str(res[0])]["from"] = res[0]
+                        self.db[str(member.guild.id)]["users"][str(member.id)]["from"] = res[0]
                     if (inviter := self.get_user(res[0])) is None:
                         try:
                             inviter = await self.fetch_user(res[0])
                         except:
                             inviter = "Unknown"
-                    embed.description = f"`{member}` has joined through [{res[1]}](https://discord.gg/{res[1]}) made by `{inviter}`"
+                    embed.description = f"[{member}](https://discord.gg/{res[1]}) has joined through [{res[1]}](https://discord.gg/{res[1]}) made by [{inviter}](https://discord.gg/{res[1]})"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"{res[1]} - {inviter}")
                 else:
-                    embed.description = f"`{member}` has joined"
+                    embed.description = f"[{member}](https://discord.com) has joined"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"Unknown")
+                await bot.get_channel(target_channel).send(embed=embed)
+
+    async def on_member_remove(self, member: discord.Member):
+        if (target_channel := self.db[str(member.guild.id)]["channel"]) is not None:
+            if self.check_permission(member.guild):
+                embed = discord.Embed(title="Member Left", color=0xff1493)
+                embed.set_thumbnail(url=member.avatar_url)
+                if (str(member.id) not in self.db[str(member.guild.id)]["users"]) or (self.db[str(member.guild.id)]["users"][str(member.id)]["from"] is None):
+                    embed.description = f"[{member}](https://discord.com) has left"
+                    embed.add_field(name="User", value=f"{member}")
+                    embed.add_field(name="Invite", value=f"Unknown")
+                else:
+                    inviter_id = self.db[str(member.guild.id)]["users"][str(member.id)]["from"]
+                    if str(inviter_id) in self.db[str(member.guild.id)]["users"] and member.id in self.db[str(member.guild.id)]["users"][str(inviter_id)]["to"] and member.id in self.db[str(member.guild.id)]["users"][str(inviter_id)]["to_all"]:
+                        self.db[str(member.guild.id)]["users"][str(inviter_id)]["to"].remove(member.id)
+                    if (inviter := self.get_user(inviter_id)) is None:
+                        try:
+                            inviter = await self.fetch_user(inviter_id)
+                        except:
+                            inviter = "Unknown"
+                    embed.description = f"[{member}](https://discord.com) invited by [{inviter}](https://discord.com) has left"
+                    embed.add_field(name="User", value=f"{member}")
+                    embed.add_field(name="Invite", value=f"{inviter}")
                 await bot.get_channel(target_channel).send(embed=embed)
 
     async def check_invite_diff(self, old_invites, new_invites):
@@ -151,9 +177,7 @@ class InvStat(commands.Bot):
         else:
             return 0
 
-    #TODO: on_invite_create, on_invite_delete の取得+処理は通知チャンネルが設定されてからに変更
-    #TODO: データベースはログ送信先に登録されているチャンネルIDさーばーIDリストを保存
-    #TODO: 招待コード,回数を文字列で保存,文字列の差異を取得して結果を確認する - (コード、回数)は文字数が決まっているので、異なるものが数字⇒OKだが、文字の場合、招待が削除されているので無視する,split+見つかったところの文字indexからコードを取得できる
+    #TODO: embed色付ける
 
     @tasks.loop(minutes=1)
     async def save_database(self):

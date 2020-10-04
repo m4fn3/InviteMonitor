@@ -10,7 +10,7 @@ class Invite(commands.Cog):
     async def setup(self, ctx):
         # 設定前に権限を確認
         if not self.bot.check_permission(ctx.guild):
-            return await ctx.send("`manage_guild`権限が不足しています!チャンネルを設定する前に権限を付与してください.")
+            return await ctx.send("Missing required permission **__manage_guild__**! Please make sure that you give me right access.")
         # 対象チャンネルを取得
         target_channel: discord.TextChannel
         if not len(ctx.message.channel_mentions):
@@ -19,18 +19,44 @@ class Invite(commands.Cog):
             target_channel = ctx.message.channel_mentions[0]
         # チャンネルデータを保存
         self.bot.db[str(ctx.guild.id)]["channel"] = target_channel.id
-        await ctx.send(f"{target_channel.mention}をログ用チャンネルに設定しました.")
+        await ctx.send(f"Log channel has been set to {target_channel.mention} successfully!")
 
     @commands.command(aliases=["st"])
     async def status(self, ctx):
         # そのサーバーでログが設定されているか確認
         if self.bot.db[str(ctx.guild.id)]["channel"] is None:
-            return await ctx.send("このサーバーではログが設定されていません!設定するには`i/setup #チャンネル`を実行してください.")
-        # 設定を取得
-        embed = discord.Embed(title="Log Settings Status")
-        embed.add_field(name="チャンネル", value=f"<#{self.bot.db[str(ctx.guild.id)]['channel']}>")
-        embed.add_field(name="招待元把握済メンバー数", value=f"{len(self.bot.db[str(ctx.guild.id)]['users'])}")
-        await ctx.send(embed=embed)
+            return await ctx.send("Log channel haven't set yet. Please select channel and available cool features by __**i/setup #チャンネル**__")
+        if not ctx.message.mentions:
+            # 設定を取得
+            embed = discord.Embed(title="Log Settings Status")
+            embed.add_field(name="Channel", value=f"<#{self.bot.db[str(ctx.guild.id)]['channel']}>")
+            embed.add_field(name="Known Members", value=f"{len(self.bot.db[str(ctx.guild.id)]['users'])}")
+            await ctx.send(embed=embed)
+        else:
+            target_user = ctx.message.mentions[0]
+            embed = discord.Embed(title=str(target_user))
+            embed.set_thumbnail(url=target_user.avatar_url)
+            if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
+                remain_count = 0
+                if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] is not None:
+                    remain_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"])
+                total_count = 0
+                if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] is not None:
+                    total_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"])
+                embed.add_field(name="Invite Count", value=f"{remain_count} / {total_count}")
+                if (inviter_id := self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["from"]) is not None:
+                    if (inviter := self.bot.get_user(inviter_id)) is None:
+                        try:
+                            inviter = await self.bot.fetch_user(inviter_id)
+                        except:
+                            inviter = "Unknown"
+                    embed.add_field(name="Invited By", value=str(inviter))
+                else:
+                    embed.add_field(name="Invited By", value="Unknown")
+            else:
+                embed.add_field(name="Invite Count", value="0 / 0")
+                embed.add_field(name="Invited By", value="Unknown")
+            await ctx.send(embed=embed)
 
     def cleanup_code(self, content):
         """Automatically removes code blocks from the code."""
