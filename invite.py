@@ -167,6 +167,15 @@ class Invite(commands.Cog):
             embed.add_field(name="Joined At", value=ctx.guild.get_member(target_user.id).joined_at.strftime("%Y/%m/%d %H:%M:%S"))
             await ctx.send(embed=embed)
 
+    @commands.command(aliases=["inv"])
+    async def invite(self, ctx):
+        await ctx.send(f"""
+__**Add {self.bot.user.name}**__
+{self.bot.datas['invite']}
+__**Enter Official Server**__
+{self.bot.datas['server']}
+""")
+
 
 def setup(bot):
     bot.add_cog(Invite(bot))

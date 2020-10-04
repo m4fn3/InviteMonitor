@@ -10,6 +10,11 @@ class InvStat(commands.Bot):
     def __init__(self, command_prefix, intents, status, activity):
         super().__init__(command_prefix, intents=intents, status=status, activity=activity)
         self.PREFIX = PREFIX
+        self.datas = {
+            "invite": "https://discord.com/oauth2/authorize?client_id=761820118379921440&scope=bot&permissions=-8",
+            "server": "https://discord.gg/RbzSSrw",
+            "author": "mafu#7582"
+        }
         with open("database.pkl", "rb") as db:
             self.db = pickle.load(db)
         self.cache = {}
@@ -49,6 +54,12 @@ class InvStat(commands.Bot):
 
     async def on_guild_remove(self, guild):
         self.clear_server(guild.id)
+
+    async def on_message(self, message):
+        if message.content == f"<@!{self.user.id}>":
+            return await message.channel.send(f"My prefix is **{self.PREFIX}**\nSee list of commands by `{self.PREFIX}help`")
+        else:
+            await self.process_commands(message)
 
     def register_server_data(self, guild_id):
         # データベースにサーバー情報を追加
