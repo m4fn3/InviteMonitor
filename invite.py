@@ -1,6 +1,5 @@
 from discord.ext import commands
-from contextlib import redirect_stdout
-import discord, traceback2, io, textwrap
+import discord
 from main import InvStat
 
 class Invite(commands.Cog):
@@ -134,9 +133,12 @@ class Invite(commands.Cog):
         if not ctx.message.mentions:
             # 設定を取得
             embed = discord.Embed(title="Log Settings Status", color=0x9932cc)
+            embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.description = f"Status of the server **{ctx.guild.name}**"
-            embed.add_field(name="Channel", value=f"<#{self.bot.db[str(ctx.guild.id)]['channel']}>")
+            embed.add_field(name="Log Channel", value=f"<#{self.bot.db[str(ctx.guild.id)]['channel']}>")
+            embed.add_field(name="Member Count", value=f"{len(ctx.guild.members)}")
             embed.add_field(name="Known Members", value=f"{len(self.bot.db[str(ctx.guild.id)]['users'])}")
+            embed.add_field(name="Invites Count", value=f"{len(self.bot.cache[str(ctx.guild.id)])}")
             await ctx.send(embed=embed)
         else:
             target_user = ctx.message.mentions[0]
@@ -162,61 +164,8 @@ class Invite(commands.Cog):
             else:
                 embed.add_field(name="Invite Count", value="0 / 0")
                 embed.add_field(name="Invited By", value="Unknown")
+            embed.add_field(name="Joined At", value=ctx.guild.get_member(target_user.id).joined_at.strftime("%Y/%m/%d %H:%M:%S"))
             await ctx.send(embed=embed)
-
-    def cleanup_code(self, content):
-        """Automatically removes code blocks from the code."""
-        # remove ```py\n```
-        if content.startswith('```') and content.endswith('```'):
-            return '\n'.join(content.split('\n')[1:-1])
-
-        # remove `foo`
-        return content.strip('` \n')
-
-    @commands.command()
-    async def exe(self, ctx, *, body: str):
-        # TODO: ADMIN実装後に修正
-        if ctx.author.id != 513136168112750593: return
-        env = {
-            'bot': self.bot,
-            'ctx': ctx,
-            'channel': ctx.channel,
-            'author': ctx.author,
-            'guild': ctx.guild,
-            'message': ctx.message,
-        }
-
-        env.update(globals())
-
-        body = self.cleanup_code(body)
-        stdout = io.StringIO()
-
-        to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
-
-        try:
-            exec(to_compile, env)
-        except Exception as e:
-            return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
-
-        func = env['func']
-        try:
-            with redirect_stdout(stdout):
-                ret = await func()
-        except Exception as e:
-            value = stdout.getvalue()
-            await ctx.send(f'```py\n{value}{traceback2.format_exc()}\n```')
-        else:
-            value = stdout.getvalue()
-            try:
-                await ctx.message.add_reaction('\u2705')
-            except:
-                pass
-
-            if ret is None:
-                if value:
-                    await ctx.send(f'```py\n{value}\n```')
-            else:
-                await ctx.send(f'```py\n{value}{ret}\n```')
 
 
 def setup(bot):

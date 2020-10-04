@@ -1,11 +1,15 @@
 from discord.ext import commands, tasks
-import discord, os, logging, pickle
+import discord, os, logging, pickle, time
 
 logging.basicConfig(level=logging.INFO)
 
+PREFIX = "i/"
+PREFIXES = "i/"
+
 class InvStat(commands.Bot):
-    def __init__(self, command_prefix, intents):
-        super().__init__(command_prefix, intents=intents)
+    def __init__(self, command_prefix, intents, status, activity):
+        super().__init__(command_prefix, intents=intents, status=status, activity=activity)
+        self.PREFIX = PREFIX
         with open("database.pkl", "rb") as db:
             self.db = pickle.load(db)
         self.cache = {}
@@ -20,7 +24,10 @@ class InvStat(commands.Bot):
         #         }
         #     }
         # }
-        self.load_extension("invite")
+        self.bot_cogs = ["developer", "invite"]
+        for cog in self.bot_cogs:
+            self.load_extension(cog)
+        self.uptime = time.time()
 
     async def on_ready(self):
         print(f"Logged in to [{self.user}]")
@@ -33,6 +40,7 @@ class InvStat(commands.Bot):
             self.register_server_data(guild_id)
         # 全サーバーの招待コード&使用済回数情報を取得
         await self.update_all_server_cache(self.guilds)
+        await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
     async def on_guild_join(self, guild):
         if self.check_permission(guild):
@@ -85,5 +93,5 @@ class InvStat(commands.Bot):
 
 if __name__ == '__main__':
     intents = discord.Intents.all()
-    bot = InvStat(command_prefix="i/", intents=intents)
+    bot = InvStat(command_prefix=PREFIXES, intents=intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
     bot.run(os.getenv("TOKEN"))
