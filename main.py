@@ -93,5 +93,5 @@ class InvStat(commands.Bot):
 
 if __name__ == '__main__':
     intents = discord.Intents.all()
-    bot = InvStat(command_prefix=PREFIXES, intents=intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
+    bot = InvStat(command_prefix=commands.when_mentioned_or(PREFIXES), intents=intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
     bot.run(os.getenv("TOKEN"))
