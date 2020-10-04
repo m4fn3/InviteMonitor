@@ -177,7 +177,14 @@ class Invite(commands.Cog):
 
     @commands.command(aliases=["inv"])
     async def invite(self, ctx):
-        await ctx.send(f"__**Add {self.bot.user.name}**__\n{self.bot.datas['invite']}\n__**Enter Official Server**__\n{self.bot.datas['server']}")
+        if not ctx.message.mentions:
+            await ctx.send(f"__**Add {self.bot.user.name}**__\n{self.bot.datas['invite']}\n__**Enter Official Server**__\n{self.bot.datas['server']}")
+        else:
+            target_user = ctx.message.mentions[0]
+            if target_user.bot:
+                await ctx.send(f"__**{str(target_user)} 's invite link**__\nhttps://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8")
+            else:
+                await ctx.send()
 
     @commands.command(aliases=["ci"])
     @commands.cooldown(1, 10, commands.BucketType.guild)
