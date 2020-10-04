@@ -1,0 +1,5 @@
+discord.py == 1.5.0
+discord == 1.0.1
+psutil
+asyncio
+traceback2
