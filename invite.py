@@ -17,11 +17,11 @@ class Invite(commands.Cog):
         if (target_channel := self.bot.db[str(invite.guild.id)]["channel"]) is not None:
             if self.bot.check_permission(invite.guild.me):
                 await self.bot.update_server_cache(invite.guild)
-                embed = discord.Embed(title="Invite Created", color=0x00ff7f)
+                embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_add']} Invite Created", color=0x00ff7f)
                 embed.description = f"Invite [{invite.code}]({invite.url}) has been created by [{str(invite.inviter)}]({invite.url})"
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
-                embed.add_field(name="MaxUses", value=f"{invite.max_uses}")
-                embed.add_field(name="MaxAge", value=f"{invite.max_age}")
+                embed.add_field(name="MaxUses", value=f"{self.parse_max_uses(invite.max_uses)}")
+                embed.add_field(name="MaxAge", value=f"{self.parse_max_age(invite.max_age)}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
 
     @commands.Cog.listener()
@@ -33,7 +33,7 @@ class Invite(commands.Cog):
                 if invite.code in self.bot.cache[str(invite.guild.id)]:
                     inviter = self.bot.cache[str(invite.guild.id)][invite.code]['author']
                 await self.bot.update_server_cache(invite.guild)
-                embed = discord.Embed(title="Invite Deleted", color=0xff8c00)
+                embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_del']} Invite Deleted", color=0xff8c00)
                 embed.description = f"Invite [{invite.code}]({invite.url}) by [{await self.bot.fetch_user(inviter) if inviter else 'Unknown'}]({invite.url}) has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
                 await self.bot.get_channel(target_channel).send(embed=embed)
@@ -45,7 +45,7 @@ class Invite(commands.Cog):
                 old_invite_cache = self.bot.cache[str(member.guild.id)]
                 new_invite_cache = await self.bot.update_server_cache(member.guild)
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)
-                embed = discord.Embed(title="Member Joined", color=0x00ffff)
+                embed = discord.Embed(title=f"{self.bot.datas['emojis']['member_join']} Member Joined", color=0x00ffff)
                 embed.set_thumbnail(url=member.avatar_url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
@@ -85,7 +85,7 @@ class Invite(commands.Cog):
     async def on_member_remove(self, member: discord.Member):
         if (target_channel := self.bot.db[str(member.guild.id)]["channel"]) is not None:
             if self.bot.check_permission(member.guild.me):
-                embed = discord.Embed(title="Member Left", color=0xff1493)
+                embed = discord.Embed(title=f"{self.bot.datas['emojis']['member_leave']} Member Left", color=0xff1493)
                 embed.set_thumbnail(url=member.avatar_url)
                 if (str(member.id) not in self.bot.db[str(member.guild.id)]["users"]) or (self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] is None):
                     embed.description = f"[{member}](https://discord.com) has left"
@@ -240,6 +240,27 @@ class Invite(commands.Cog):
             self.bot.db[str(ctx.guild.id)]["users"][user]["to"] = set()
             self.bot.db[str(ctx.guild.id)]["users"][user]["to_all"] = set()
         await ctx.send("All cached data has deleted successfully!")
+
+    def parse_max_uses(self, max_uses: int) -> str:
+        if max_uses == 0:
+            return "∞"
+        else:
+            return str(max_uses)
+
+    def parse_max_age(self, max_age: int) -> str:
+        if max_age == 0:
+            return "∞"
+        elif max_age == 1800:
+            return "30 minutes"
+        elif max_age == 3600:
+            return "1 hour"
+        elif max_age == 21600:
+            return "6 hours"
+        elif max_age == 43200:
+            return "12 hours"
+        elif max_age == 86400:
+            return "1 day"
+
 
 def setup(bot):
     bot.add_cog(Invite(bot))

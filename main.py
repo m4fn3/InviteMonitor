@@ -13,7 +13,13 @@ class InvStat(commands.Bot):
         self.datas = {
             "invite": "https://discord.com/oauth2/authorize?client_id=761820118379921440&scope=bot&permissions=-8",
             "server": "https://discord.gg/RbzSSrw",
-            "author": "mafu#7582"
+            "author": "mafu#7582",
+            "emojis": {
+                "invite_add": "<:invite_add:762303590365921280>",
+                "invite_del": "<:invite_del:762303590529892432>",
+                "member_join": "<:member_join:762305608271265852>",
+                "member_leave": "<:member_leave:762305607625605140>"
+            }
         }
         with open("database.pkl", "rb") as db:
             self.db = pickle.load(db)
