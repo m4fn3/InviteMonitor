@@ -48,7 +48,7 @@ class InvStat(commands.Bot):
         await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
     async def on_guild_join(self, guild):
-        if self.check_permission(guild):
+        if self.check_permission(guild.me):
             await self.update_server_cache(guild)
         self.register_server_data(guild.id)
 
@@ -91,8 +91,8 @@ class InvStat(commands.Bot):
             if self.db[str(guild.id)]["channel"] is not None:
                 await self.update_server_cache(guild)
 
-    def check_permission(self, guild):
-        if guild.me.guild_permissions.manage_guild:
+    def check_permission(self, member):
+        if member.guild_permissions.manage_guild:
             return 1
         else:
             return 0
