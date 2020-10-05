@@ -31,7 +31,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         return content.strip('` \n')
 
     async def cog_before_invoke(self, ctx):
-        if ctx.author.id == self.bot.owner_id:
+        if ctx.author.id != 513136168112750593:
             raise Exception("Developer-Admin-Error")
 
     async def cog_command_error(self, ctx, error):

@@ -12,6 +12,8 @@ class Invite(commands.Cog):
             await ctx.send(f"Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send("Missing required argumnts!")
+        else:
+            await ctx.send(f"Unexpected error has occured. please contact to bot develpoer.\n{error}")
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
@@ -19,7 +21,7 @@ class Invite(commands.Cog):
             if self.bot.check_permission(invite.guild.me):
                 await self.bot.update_server_cache(invite.guild)
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_add']} Invite Created", color=0x00ff7f)
-                embed.description = f"Invite [{invite.code}]({invite.url}) has been created by [{str(invite.inviter)}]({invite.url})"
+                embed.description = f"Invite [{invite.code}]({invite.url}) has been created by <@{invite.inviter.id}>"
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
                 embed.add_field(name="MaxUses", value=f"{self.parse_max_uses(invite.max_uses)}")
                 embed.add_field(name="MaxAge", value=f"{self.parse_max_age(invite.max_age)}")
@@ -35,7 +37,7 @@ class Invite(commands.Cog):
                     inviter = self.bot.cache[str(invite.guild.id)][invite.code]['author']
                 await self.bot.update_server_cache(invite.guild)
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_del']} Invite Deleted", color=0xff8c00)
-                embed.description = f"Invite [{invite.code}]({invite.url}) by [{await self.bot.fetch_user(inviter) if inviter else 'Unknown'}]({invite.url}) has deleted or expired."
+                embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@'+str(inviter)+'>' if inviter else 'Unknown'} has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
                 await self.bot.get_channel(target_channel).send(embed=embed)
 
@@ -73,11 +75,11 @@ class Invite(commands.Cog):
                             inviter = await self.bot.fetch_user(res[0])
                         except:
                             inviter = "Unknown"
-                    embed.description = f"[{member}](https://discord.gg/{res[1]}) has joined through [{res[1]}](https://discord.gg/{res[1]}) made by [{inviter}](https://discord.gg/{res[1]})"
+                    embed.description = f"<@{member.id}> has joined through [{res[1]}](https://discord.gg/{res[1]}) made by <@{inviter.id}>"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"{res[1]} - {inviter}")
                 else:
-                    embed.description = f"[{member}](https://discord.com) has joined"
+                    embed.description = f"<@{member.id}> has joined"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"Unknown")
                 await self.bot.get_channel(target_channel).send(embed=embed)
@@ -89,7 +91,7 @@ class Invite(commands.Cog):
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['member_leave']} Member Left", color=0xff1493)
                 embed.set_thumbnail(url=member.avatar_url)
                 if (str(member.id) not in self.bot.db[str(member.guild.id)]["users"]) or (self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] is None):
-                    embed.description = f"[{member}](https://discord.com) has left"
+                    embed.description = f"<@{member.id}> has left"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"Unknown")
                 else:
@@ -101,7 +103,7 @@ class Invite(commands.Cog):
                             inviter = await self.bot.fetch_user(inviter_id)
                         except:
                             inviter = "Unknown"
-                    embed.description = f"[{member}](https://discord.com) invited by [{inviter}](https://discord.com) has left"
+                    embed.description = f"<@{member.id}> invited by <@{inviter.id}> has left"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"{inviter}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
@@ -170,7 +172,7 @@ class Invite(commands.Cog):
                 self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
                 await ctx.send(f"All cached data of **{target_user}** has deleted successfully!")
             else:
-                await ctx.sedn("There is no cached data for this user yet!")
+                await ctx.send("There is no cached data for this user yet!")
 
     def parse_max_uses(self, max_uses: int) -> str:
         if max_uses == 0:

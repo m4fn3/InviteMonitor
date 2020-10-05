@@ -35,7 +35,7 @@ class InvStat(commands.Bot):
         #         }
         #     }
         # }
-        self.bot_cogs = ["developer", "invite"]
+        self.bot_cogs = ["developer", "invite", "setting"]
         for cog in self.bot_cogs:
             self.load_extension(cog)
         self.uptime = time.time()
