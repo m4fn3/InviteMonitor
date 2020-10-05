@@ -37,5 +37,5 @@ The setting is over. <u>How easy to setup!</u><br>
 Discord doesn't provide inviter information directly,<br>
 so I can't get information about the users who joined before monitoring was enabled with the `i/enable` command.<br>
 We recommend you to invite this BOT earlier when you make the server!<br>
-<b>But don't worry, you are not late! please add bot to start monitoring!</b> 😉
+<b><u>But don't worry, you are not late! please add bot to start monitoring!</u></b> 😉
 </div>
