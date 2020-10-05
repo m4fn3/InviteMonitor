@@ -4,7 +4,7 @@ InvStat is strong server invites monitoring bot that allows you to<br>
 ・📨 know inviter of participant<br>
 ・🔢 counts people invited by a particular user<br>
 ・🚫 kick users who invited by specified troll user<br>
-<b>It protects your server from malicious users and manage private server invitations for security!</b> 🔐
+<b><u>It protects your server from malicious users and manage private server invitations for security!</u></b> 🔐
 </div>
 
 <h1 style="margin: 30px 5px 5px 5px; padding: 0px"> To Get Started!</h1>
