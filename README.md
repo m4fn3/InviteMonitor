@@ -32,10 +32,10 @@ The setting is over. <u>How easy to setup!</u><br>
 </div>
 </div>
 
-<div style="border: solid 3px red;border-radius: 20px;padding: 10px;margin: 10px 0px 0px 0px">
+<div style="border: solid 3px red;border-radius: 20px;padding: 10px;margin: 30px 0px 0px 0px">
 <h2 style="padding: 5px;margin: 0px;"> ⚠ ATTENTION</h2>
 Discord doesn't provide inviter information directly,<br>
-so I can't get information about the users who joined before monitoring was enabled with the `i/enable` command.<br>
+so I can't get information about the users who joined before monitoring was enabled with the <code>i/enable</code> command.<br>
 We recommend you to invite this BOT earlier when you make the server!<br>
 <b><u>But don't worry, you are not late! please add bot to start monitoring!</u></b> 😉
 </div>
