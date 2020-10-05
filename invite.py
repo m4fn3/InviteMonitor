@@ -3,6 +3,7 @@ import discord
 from main import InvStat
 
 class Invite(commands.Cog):
+    """Manage invites"""
     def __init__(self, bot):
         self.bot = bot  # type: InvStat
 
@@ -116,66 +117,7 @@ class Invite(commands.Cog):
         else:
             return None  # 何らかの問題で,変更点が見つからなかった場合
 
-    @commands.command(aliases=["su", "set_up", "set-up"])
-    async def setup(self, ctx):
-        # 設定前に権限を確認
-        if not self.bot.check_permission(ctx.guild.me):
-            return await ctx.send("Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
-        if not self.bot.check_permission(ctx.author):
-            return await ctx.send("You don't have **__manage_guild__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
-        # 対象チャンネルを取得
-        target_channel: discord.TextChannel
-        if not len(ctx.message.channel_mentions):
-            target_channel = ctx.channel
-        else:
-            target_channel = ctx.message.channel_mentions[0]
-        # チャンネルデータを保存
-        self.bot.db[str(ctx.guild.id)]["channel"] = target_channel.id
-        await ctx.send(f"Log channel has been set to {target_channel.mention} successfully!")
-
-    @commands.command(aliases=["st"])
-    async def status(self, ctx):
-        # そのサーバーでログが設定されているか確認
-        if self.bot.db[str(ctx.guild.id)]["channel"] is None:
-            return await ctx.send("Log channel haven't set yet. Please select channel and available cool features by __**i/setup #チャンネル**__")
-        if not ctx.message.mentions:
-            # 設定を取得
-            embed = discord.Embed(title="Log Settings Status", color=0x9932cc)
-            embed.set_thumbnail(url=ctx.guild.icon_url)
-            embed.description = f"Status of the server **{ctx.guild.name}**"
-            embed.add_field(name="Log Channel", value=f"<#{self.bot.db[str(ctx.guild.id)]['channel']}>")
-            embed.add_field(name="Member Count", value=f"{len(ctx.guild.members)}")
-            embed.add_field(name="Known Members", value=f"{len(self.bot.db[str(ctx.guild.id)]['users'])}")
-            embed.add_field(name="Invites Count", value=f"{len(self.bot.cache[str(ctx.guild.id)])}")
-            await ctx.send(embed=embed)
-        else:
-            target_user = ctx.message.mentions[0]
-            embed = discord.Embed(title=str(target_user), color=0xffff00)
-            embed.set_thumbnail(url=target_user.avatar_url)
-            if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
-                remain_count = 0
-                if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] is not None:
-                    remain_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"])
-                total_count = 0
-                if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] is not None:
-                    total_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"])
-                embed.add_field(name="Invite Count", value=f"{remain_count} / {total_count}")
-                if (inviter_id := self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["from"]) is not None:
-                    if (inviter := self.bot.get_user(inviter_id)) is None:
-                        try:
-                            inviter = await self.bot.fetch_user(inviter_id)
-                        except:
-                            inviter = "Unknown"
-                    embed.add_field(name="Invited By", value=str(inviter))
-                else:
-                    embed.add_field(name="Invited By", value="Unknown")
-            else:
-                embed.add_field(name="Invite Count", value="0 / 0")
-                embed.add_field(name="Invited By", value="Unknown")
-            embed.add_field(name="Joined At", value=ctx.guild.get_member(target_user.id).joined_at.strftime("%Y/%m/%d %H:%M:%S"))
-            await ctx.send(embed=embed)
-
-    @commands.command(aliases=["inv"])
+    @commands.command(aliases=["inv"], usage="invite (@bot)", description="Show invite URL of this BOT. If bot mentioned, send invite url of mentioned bot")
     async def invite(self, ctx):
         if not ctx.message.mentions:
             await ctx.send(f"__**Add {self.bot.user.name}**__\n{self.bot.datas['invite']}\n__**Enter Official Server**__\n{self.bot.datas['server']}")
@@ -186,7 +128,7 @@ class Invite(commands.Cog):
             else:
                 await ctx.send()
 
-    @commands.command(aliases=["ci"])
+    @commands.command(usage="clear_invites (@user)", descrition="Delete invite url/codes made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_invites(self, ctx):
         # 設定前に権限を確認
@@ -196,57 +138,39 @@ class Invite(commands.Cog):
         if not self.bot.check_permission(ctx.author):
             ctx.command.reset_cooldown(ctx)
             return await ctx.send("You don't have **__manage_guild__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
-        if not ctx.message.mentions:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send("Please mention the user that want to clear invites!")
-        target_user = ctx.message.mentions[0]
-        for invite in await ctx.guild.invites():
-            if invite.inviter.id == target_user.id:
+        if not ctx.message.mentions:  # 全員分
+            await ctx.send("It may takes several time if the server is big..")
+            for invite in await ctx.guild.invites():
                 await invite.delete()
-        await ctx.send(f"All server invites created by **{target_user}** has deleted successfully!")
+            await ctx.send("All server invites has deleted successfully!")
+        else:  # 特定ユーザー分
+            target_user = ctx.message.mentions[0]
+            for invite in await ctx.guild.invites():
+                if invite.inviter.id == target_user.id:
+                    await invite.delete()
+            await ctx.send(f"All server invites created by **{target_user}** has deleted successfully!")
 
-    @commands.command(aliases=["cai"])
-    @commands.cooldown(1, 60, commands.BucketType.guild)
-    async def clear_all_invites(self, ctx):
-        if not self.bot.check_permission(ctx.guild.me):
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send("Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
-        if not self.bot.check_permission(ctx.author):
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send("You don't have **__manage_guild__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
-        await ctx.send("It may takes several time if the server is big..")
-        for invite in await ctx.guild.invites():
-            await invite.delete()
-        await ctx.send("All server invites has deleted successfully!")
-
-    @commands.command(aliases=["cc"])
+    @commands.command(usage="clear_cache (@user)", description="Delete invited counts data of mentioned user. If no user mentioned, delete data of all server members.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_cache(self, ctx):
+        # 設定前に権限を確認
         if not self.bot.check_permission(ctx.author):
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send("You don't have **__manage_guild__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
-        if not ctx.message.mentions:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send("Please mention the user that want to clear cache!")
-        target_user = ctx.message.mentions[0]
-        if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
-            self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] = set()
-            self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
-            await ctx.send(f"All cached data of **{target_user}** has deleted successfully!")
-        else:
-            await ctx.sedn("There is no cached data for this user yet!")
-
-    @commands.command(aliases=["cac"])
-    @commands.cooldown(1, 60, commands.BucketType.guild)
-    async def clear_all_cache(self, ctx):
-        if not self.bot.check_permission(ctx.author):
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send("You don't have **__manage_guild__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
-        await ctx.send("It may takes several time if the server is big..")
-        for user in self.bot.db[str(ctx.guild.id)]["users"]:
-            self.bot.db[str(ctx.guild.id)]["users"][user]["to"] = set()
-            self.bot.db[str(ctx.guild.id)]["users"][user]["to_all"] = set()
-        await ctx.send("All cached data has deleted successfully!")
+            return await ctx.send("You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
+        if not ctx.message.mentions:  # 全員分
+            await ctx.send("It may takes several time if the server is big..")
+            for user in self.bot.db[str(ctx.guild.id)]["users"]:
+                self.bot.db[str(ctx.guild.id)]["users"][user]["to"] = set()
+                self.bot.db[str(ctx.guild.id)]["users"][user]["to_all"] = set()
+            await ctx.send("All cached data has deleted successfully!")
+        else:  # 特定ユーザー分
+            target_user = ctx.message.mentions[0]
+            if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
+                self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] = set()
+                self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
+                await ctx.send(f"All cached data of **{target_user}** has deleted successfully!")
+            else:
+                await ctx.sedn("There is no cached data for this user yet!")
 
     def parse_max_uses(self, max_uses: int) -> str:
         if max_uses == 0:
