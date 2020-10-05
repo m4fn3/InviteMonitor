@@ -1,9 +1,9 @@
 from discord.ext import commands
-import discord
+import discord, datetime, time
 from main import InvStat
 
 class Setting(commands.Cog):
-    """SetUp the bot"""
+    """__SetUp the bot__"""
 
     def __init__(self, bot):
         self.bot = bot  # type: InvStat
@@ -77,6 +77,22 @@ class Setting(commands.Cog):
             embed.add_field(name="Joined At", value=ctx.guild.get_member(target_user.id).joined_at.strftime("%Y/%m/%d %H:%M:%S"))
             await ctx.send(embed=embed)
 
+    @commands.command(usage="about", description="Show the information about his BOT")
+    async def about(self, ctx):
+        embed = discord.Embed(title=f"About {self.bot.user.name}")
+        embed.description = f"""Thank you for using {self.bot.user.name}!
+InvStat is strong server invites monitoring bot that allows you to know inviter of participant, counts people invited by a particular user and so on!
+Also protect your server from malicious users and manage private server invitations for security.
+"""
+        embed.add_field(name="Discord", value=f"Server Count: {len(self.bot.guilds)}\nUser Count: {len(self.bot.users)}\nLatency: {self.bot.latency:.2f}[ms]")
+        td = datetime.timedelta(seconds=int(time.time() - self.bot.uptime))
+        m, s = divmod(td.seconds, 60)
+        h, m = divmod(m, 60)
+        d = td.days
+        embed.add_field(name="Uptime", value=f"{d}d {h}h {m}m {s}s")
+        embed.add_field(name="URL", value=f"[InviteBOT]({self.bot.datas['invite']}) | [OfficialServer]({self.bot.datas['server']})", inline=False)
+        embed.set_footer(text=f"{self.bot.user.name} is powered by {self.bot.get_user(self.bot.datas['author'])} with discord.py", icon_url="http://zorba.starfree.jp/mafu.jpg")
+        await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(Setting(bot))

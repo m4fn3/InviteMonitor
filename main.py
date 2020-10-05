@@ -1,5 +1,6 @@
 from discord.ext import commands, tasks
 import discord, os, logging, pickle, time
+from help import Help
 
 logging.basicConfig(level=logging.INFO)
 
@@ -7,14 +8,15 @@ PREFIX = "i/"
 PREFIXES = "i/"
 
 class InvStat(commands.Bot):
-    def __init__(self, command_prefix, intents, status, activity):
-        super().__init__(command_prefix, intents=intents, status=status, activity=activity)
+    def __init__(self, command_prefix, help_command, intents, status, activity):
+        super().__init__(command_prefix, help_command, intents=intents, status=status, activity=activity)
         self.PREFIX = PREFIX
         self.datas = {
             "invite": "https://discord.com/oauth2/authorize?client_id=761820118379921440&scope=bot&permissions=-8",
             "server": "https://discord.gg/RbzSSrw",
-            "author": "mafu#7582",
+            "author": 513136168112750593,
             "emojis": {
+                "loading": "<a:loading:762566694572916766>",
                 "invite_add": "<:invite_add:762303590365921280>",
                 "invite_del": "<:invite_del:762303590529892432>",
                 "member_join": "<:member_join:762305608271265852>",
@@ -35,7 +37,7 @@ class InvStat(commands.Bot):
         #         }
         #     }
         # }
-        self.bot_cogs = ["developer", "invite", "setting"]
+        self.bot_cogs = ["developer", "invite", "setting", "manage"]
         for cog in self.bot_cogs:
             self.load_extension(cog)
         self.uptime = time.time()
@@ -110,5 +112,5 @@ class InvStat(commands.Bot):
 
 if __name__ == '__main__':
     intents = discord.Intents.all()
-    bot = InvStat(command_prefix=commands.when_mentioned_or(PREFIXES), intents=intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
+    bot = InvStat(command_prefix=commands.when_mentioned_or(PREFIXES), help_command=Help(),intents=intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
     bot.run(os.getenv("TOKEN"))
