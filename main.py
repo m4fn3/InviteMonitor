@@ -1,6 +1,10 @@
 from discord.ext import commands, tasks
 import discord, os, logging, pickle, time
+from dotenv import load_dotenv
 from help import Help
+
+load_dotenv(verbose=True)
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 logging.basicConfig(level=logging.INFO)
 

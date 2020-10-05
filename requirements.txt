@@ -3,3 +3,4 @@ discord == 1.0.1
 psutil
 asyncio
 traceback2
+python-dotenv
