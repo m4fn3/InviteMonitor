@@ -8,7 +8,7 @@ class Manage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: InvStat
 
-    @commands.command(usage="kick @user", description="Kick the mentioned user and delete invites made by mentioned user")
+    @commands.command(usage="kick [@user]", description="Kick the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick(self, ctx):
         # 権限を確認
@@ -31,7 +31,7 @@ class Manage(commands.Cog):
                 await invite.delete()
         await ctx.send("<@" + "> <@".join(target_users) + "> has kicked successfully!")
 
-    @commands.command(usage="ban @user", description="Ban the mentioned user and delete invites made by mentioned user")
+    @commands.command(usage="ban [@user]", description="Ban the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban(self, ctx):
         # 権限を確認
@@ -54,7 +54,7 @@ class Manage(commands.Cog):
                 await invite.delete()
         await ctx.send("<@" + "> <@".join(target_users) + "> has banned successfully!")
 
-    @commands.command(usage="kick_together @user", description="Kick the mentioned user and users who invited by mentioned user. Also delete invites made by them.")
+    @commands.command(usage="kick_together [@user]", description="Kick the mentioned user and users who invited by mentioned user. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick_together(self, ctx):
         # 権限を確認
@@ -86,7 +86,7 @@ class Manage(commands.Cog):
                 await invite.delete()
         await ctx.send("<@" + "> <@".join(target_checked) + "> has banned successfully!")
 
-    @commands.command(usage="ban_together @user", description="Ban the mentioned user and users who invited by mentioned user. Also delete invites made by them.")
+    @commands.command(usage="ban_together [@user]", description="Ban the mentioned user and users who invited by mentioned user. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban_together(self, ctx):
         # 権限を確認
