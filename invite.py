@@ -122,13 +122,20 @@ class Invite(commands.Cog):
     @commands.command(aliases=["inv"], usage="invite (@bot)", description="Show invite URL of this BOT. If bot mentioned, send invite url of mentioned bot")
     async def invite(self, ctx):
         if not ctx.message.mentions:
-            await ctx.send(f"__**Add {self.bot.user.name}**__\n{self.bot.datas['invite']}\n__**Enter Official Server**__\n{self.bot.datas['server']}")
+            await ctx.send(f"__**Add {self.bot.user.name}!**__\n{self.bot.datas['invite']}\n__**Join Official Server!**__\n{self.bot.datas['server']}")
         else:
-            target_user = ctx.message.mentions[0]
-            if target_user.bot:
-                await ctx.send(f"__**{str(target_user)} 's invite link**__\nhttps://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8")
-            else:
-                await ctx.send("This account is not the bot!")
+            invite_text = ""
+            for target_user in ctx.message.mentions:
+                if target_user.bot:
+                    new_invite_text = f"__**{str(target_user)} 's invite link**__\nhttps://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8\n"
+                else:
+                    new_invite_text = f"{target_user} is not the bot!\n"
+                if len(invite_text+new_invite_text) > 1900:
+                    invite_text += "(Some invites have been omitted due to message length limit)"
+                    break
+                else:
+                    invite_text += new_invite_text
+            await ctx.send(invite_text)
 
     @commands.command(aliases=["clear_invite"], usage="clear_invites (@user)", description="Delete invite url/codes made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")
     @commands.cooldown(1, 10, commands.BucketType.guild)

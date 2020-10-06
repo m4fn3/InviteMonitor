@@ -35,8 +35,9 @@ class InvStat(commands.Bot):
         #         "channel": None,
         #         "users": {
         #             "id": {
-        #                 "invites": {},
-        #                 "invited_by": 113131
+        #                 "to": {},
+        #                 "to_all": {}, 
+        #                 "from": 113131
         #             }
         #         }
         #     }
