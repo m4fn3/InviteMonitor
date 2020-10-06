@@ -8,6 +8,14 @@ class Manage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  # type: InvStat
 
+    async def cog_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            await ctx.send(f"Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("Missing required argumnts!")
+        else:
+            await ctx.send(f"Unexpected error has occured. please contact to bot develpoer.\n{error}")
+
     @commands.command(usage="kick [@user]", description="Kick the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick(self, ctx):
