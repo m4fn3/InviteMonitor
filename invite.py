@@ -164,11 +164,11 @@ class Invite(commands.Cog):
                 await invite.delete()
             await ctx.send("All server invites has deleted successfully!")
         else:  # 特定ユーザー分
-            target_user = ctx.message.mentions[0]
+            target_users = {user.id for user in ctx.message.mentions}
             for invite in await ctx.guild.invites():
-                if invite.inviter.id == target_user.id:
+                if invite.inviter.id in target_users:
                     await invite.delete()
-            await ctx.send(f"All server invites created by **{target_user}** has deleted successfully!")
+            await ctx.send(f"All server invites created by <@" + "> <@".join(target_users) + "> has deleted successfully!")
 
     @commands.command(aliases=["clear_caches"], usage="clear_cache (@user)", description="Delete invited counts data of mentioned user. If no user mentioned, delete data of all server members.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -194,13 +194,11 @@ class Invite(commands.Cog):
                 self.bot.db[str(ctx.guild.id)]["users"][user]["to_all"] = set()
             await ctx.send("All cached data has deleted successfully!")
         else:  # 特定ユーザー分
-            target_user = ctx.message.mentions[0]
-            if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
-                self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] = set()
-                self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
-                await ctx.send(f"All cached data of **{target_user}** has deleted successfully!")
-            else:
-                await ctx.send("There is no cached data for this user yet!")
+            for target_user in ctx.message.mentions:
+                if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
+                    self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] = set()
+                    self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
+            await ctx.send(f"All cached data of <@" + "> <@".join(ctx.message.mentions) + "> has deleted successfully!")
 
     def parse_max_uses(self, max_uses: int) -> str:
         if max_uses == 0:
