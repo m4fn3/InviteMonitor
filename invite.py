@@ -11,9 +11,9 @@ class Invite(commands.Cog):
         if isinstance(error, commands.CommandOnCooldown):
             await ctx.send(f"Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Missing required argumnts!")
+            await ctx.send("Missing required arguments!")
         else:
-            await ctx.send(f"Unexpected error has occured. please contact to bot develpoer.\n{error}")
+            await ctx.send(f"Unexpected error has occurred. please contact to bot developer.\n{error}")
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):

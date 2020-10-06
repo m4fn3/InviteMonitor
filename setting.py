@@ -12,9 +12,9 @@ class Setting(commands.Cog):
         if isinstance(error, commands.CommandOnCooldown):
             await ctx.send(f"Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Missing required argumnts!")
+            await ctx.send("Missing required arguments!")
         else:
-            await ctx.send(f"Unexpected error has occured. please contact to bot develpoer.\n{error}")
+            await ctx.send(f"Unexpected error has occurred. please contact to bot developer.\n{error}")
 
     @commands.command(usage="enable (#channel)", description="Start monitor invites and report logs to specified channel. If no channel provided, set to command executed channel.")
     async def enable(self, ctx):
