@@ -128,7 +128,7 @@ class Invite(commands.Cog):
             if target_user.bot:
                 await ctx.send(f"__**{str(target_user)} 's invite link**__\nhttps://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8")
             else:
-                await ctx.send()
+                await ctx.send("This account is not the bot!")
 
     @commands.command(aliases=["clear_invite"], usage="clear_invites (@user)", description="Delete invite url/codes made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
