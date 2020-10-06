@@ -17,22 +17,22 @@ class Help(commands.HelpCommand):
             command_list = [command.name for command in await self.filter_commands(cog.get_commands())]
             embed_org.add_field(name=cog_name, value="`"+"`, `".join(command_list)+"`", inline=False)
         message = await self.get_destination().send(embed=embed_org)
-        await message.add_reaction("◀")
-        await message.add_reaction("▶")
+        await message.add_reaction("◀️")
+        await message.add_reaction("▶️")
         await message.add_reaction("❔")
 
         def check(r, u):
-            return r.message.id == message.id and u == self.context.author and str(r.emoji) in ["◀", "▶", "❔"]
+            return r.message.id == message.id and u == self.context.author and str(r.emoji) in ["◀️", "▶️", "❔"]
 
         while True:
             try:
                 reaction, user = await self.context.bot.wait_for("reaction_add", timeout=60, check=check)
-                if str(reaction.emoji) == "▶":
+                if str(reaction.emoji) == "▶️":
                     if page == len(cogs) + 1:
                         page = 1
                     else:
                         page += 1
-                elif str(reaction.emoji) == "◀":
+                elif str(reaction.emoji) == "◀️":
                     if page == 1:
                         page = len(cogs) + 1
                     else:
@@ -57,8 +57,8 @@ class Help(commands.HelpCommand):
                     embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"```{description}```", inline=False)
                 await message.edit(embed=embed)
             except asyncio.TimeoutError:
-                await message.remove_reaction("◀", self.context.bot.user)
-                await message.remove_reaction("▶", self.context.bot.user)
+                await message.remove_reaction("◀️", self.context.bot.user)
+                await message.remove_reaction("▶️", self.context.bot.user)
                 await message.remove_reaction("❔", self.context.bot.user)
                 break
 
