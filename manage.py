@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord, traceback2, re
 from main import InvStat
 
+
 class Manage(commands.Cog):
     """__Manage members__"""
 
@@ -95,16 +96,17 @@ class Manage(commands.Cog):
         target_users = set()
         error_msg = ""
         # 招待コードが有効であることを確認する,有効あらばリンクの作成者を対象者に追加
+        target_invites = set()
         for invite in invites:
             if invite not in self.bot.cache[str(ctx.guild.id)]:
                 error_msg += f":x: `{invite}` is invalid invite code.\n"
-                invites.remove(invite)
             else:
+                target_invites.add(invite)
                 target_users.add(self.bot.cache[str(ctx.guild.id)][invite]["author"])
         # 指定されたユーザーに招待された人のIDのリストを作成
         for user in self.bot.db[str(ctx.guild.id)]["users"]:
             # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
-            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in invites):
+            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in target_invites):
                 target_users.add(int(user))
         target_users = target_users.union(mentions)
         # Kickに成功した人のみのリストを作成
@@ -116,15 +118,14 @@ class Manage(commands.Cog):
                 error_msg += f":x: Failed to kick user <@{target}>\n"
             else:
                 target_checked.add(str(target))
-        if not target_checked:
-            return
-        elif error_msg != "":
+        if error_msg != "":
             await ctx.send(error_msg)
+        if not target_checked:
+            return await ctx.send(":mag: No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
         await ctx.send(":magic_wand: <@" + "> <@".join(target_checked) + "> has kicked successfully!")
-
     @commands.command(usage="ban_with [@user | code]", description="Ban the users who invited with mentioned user or spcified invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban_with(self, ctx):
@@ -148,16 +149,17 @@ class Manage(commands.Cog):
         target_users = set()
         error_msg = ""
         # 招待コードが有効であることを確認する,有効あらばリンクの作成者を対象者に追加
+        target_invites = set()
         for invite in invites:
             if invite not in self.bot.cache[str(ctx.guild.id)]:
                 error_msg += f":x: `{invite}` is invalid invite code.\n"
-                invites.remove(invite)
             else:
+                target_invites.add(invite)
                 target_users.add(self.bot.cache[str(ctx.guild.id)][invite]["author"])
         # 指定されたユーザーに招待された人のIDのリストを作成
         for user in self.bot.db[str(ctx.guild.id)]["users"]:
             # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
-            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in invites):
+            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in target_invites):
                 target_users.add(int(user))
         target_users = target_users.union(mentions)
         # Kickに成功した人のみのリストを作成
@@ -169,10 +171,10 @@ class Manage(commands.Cog):
                 error_msg += f":x: Failed to ban user <@{target}>\n"
             else:
                 target_checked.add(str(target))
-        if not target_checked:
-            return
-        elif error_msg != "":
+        if error_msg != "":
             await ctx.send(error_msg)
+        if not target_checked:
+            return await ctx.send(":mag: No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
