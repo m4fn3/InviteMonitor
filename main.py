@@ -36,9 +36,17 @@ class InvStat(commands.Bot):
         #         "users": {
         #             "id": {
         #                 "to": {},
-        #                 "to_all": {}, 
+        #                 "to_all": {},
         #                 "from": 113131,
         #                 "code": "XyzABCopQ"
+        #             }
+        #         },
+        #         "roles": {
+        #             "user": {
+        #                 "id": "role_id"
+        #             },
+        #             "code": {
+        #                 "code": "role_id"
         #             }
         #         }
         #     }

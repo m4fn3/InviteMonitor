@@ -46,6 +46,10 @@ class Invite(commands.Cog):
                         user = "Unknown"
                 embed.add_field(name="Inviter", value=f"{user}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
+                # InviteRoleに登録されたコードが削除されていないかどうか確認する
+                if invite.code in self.bot.db[str(invite.guild.id)]["roles"]["code"]:
+                    await self.bot.get_channel(target_channel).send(f":warning: Invite `{invite.code}` was deleted, so this trigger is no longer available!")
+                    del self.bot.db[str(invite.guild.id)]["roles"]["code"][invite.code]  # 削除する
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -103,6 +107,29 @@ class Invite(commands.Cog):
                 embed.add_field(name="Account Created", value=f"{delta} ago", inline=False)
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
                 await self.bot.get_channel(target_channel).send(embed=embed)
+                if member.guild.me.guild_permissions.manage_roles:  # ロール管理権限がある場合
+                    if res[0] in self.bot.db[str(member.guild.id)]["roles"]["user"]:  # 招待者が設定されている場合
+                        role_id = self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]
+                        target_role = member.guild.get_role(role_id)
+                        if target_role is None:  # 役職を取得できない場合
+                            await self.bot.get_channel(target_channel).send(f":warning: Role `{role_id}` was not found, so this trigger is no longer available!")
+                            del self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]  # 削除する
+                        else:
+                            try:
+                                await member.add_roles(target_role)
+                            except:
+                                pass
+                    elif res[1] in self.bot.db[str(member.guild.id)]["roles"]["code"]:
+                        role_id = self.bot.db[str(member.guild.id)]["roles"]["code"][res[1]]
+                        target_role = member.guild.get_role(role_id)
+                        if target_role is None:  # 役職を取得できない場合
+                            await self.bot.get_channel(target_channel).send(f":warning: Role `{role_id}` was not found, so this trigger is no longer available!")
+                            del self.bot.db[str(member.guild.id)]["roles"]["code"][res[1]]  # 削除する
+                        else:
+                            try:
+                                await member.add_roles(target_role)
+                            except:
+                                pass
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
@@ -171,72 +198,17 @@ class Invite(commands.Cog):
                     invite_text += new_invite_text
             await ctx.send(invite_text)
 
-    @commands.command(aliases=["clear_invite"], usage="clear_invites (@user)", description="Delete invite url/codes made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")
-    @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def clear_invites(self, ctx):
-        # 設定前に権限を確認
-        if not self.bot.check_permission(ctx.guild.me):
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
-        if not self.bot.check_permission(ctx.author):
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
-        if not ctx.message.mentions:  # 全員分
-            await ctx.send(f":warning: **ARE YOU REALLY WANT TO DELETE ALL INVITE URLS OF THE SERVER?**\nType '**yes**' to continue.")
+    @commands.group()
+    async def invite_role(self, ctx):
+        pass  # リストを表示
 
-            def check(m):
-                return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
+    @invite_role.command(name="user", aliase=["inviter"])
+    async def invite_role_user(self, ctx, user_id, role_id):
+        pass  # 設定する
 
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=30)
-                if msg.content not in ["yes", "y", "'yes'"]:
-                    return await ctx.send(":negative_squared_cross_mark: Command canceled!")
-            except asyncio.TimeoutError:
-                return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
-            await ctx.send(f"{self.bot.datas['emojis']['loading']} It may takes several time if the server is large..")
-            for invite in await ctx.guild.invites():
-                await invite.delete()
-            await ctx.send(":recycle: All server invites has deleted successfully!")
-        else:  # 特定ユーザー分
-            target_users = {user.id for user in ctx.message.mentions}
-            for invite in await ctx.guild.invites():
-                if invite.inviter.id in target_users:
-                    await invite.delete()
-            mentions_text = "<@" + "> <@".join(target_users) + ">"
-            await ctx.send(f":recycle: All server invites created by {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
-
-    @commands.command(aliases=["clear_caches"], usage="clear_cache (@user)", description="Delete invited counts data of mentioned user. If no user mentioned, delete data of all server members.")
-    @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def clear_cache(self, ctx):
-        # 設定前に権限を確認
-        if not self.bot.check_permission(ctx.author):
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
-        if not ctx.message.mentions:  # 全員分
-            await ctx.send(f":warning: **ARE YOU REALLY WANT TO DELETE INVITED COUNTS DATA OF ALL SERVER MEMBERS?**\nType '**yes**' to continue.")
-
-            def check(m):
-                return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=30)
-                if msg.content not in ["yes", "y", "'yes'"]:
-                    return await ctx.send(":negative_squared_cross_mark: Command canceled!")
-            except asyncio.TimeoutError:
-                return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
-            await ctx.send(f"{self.bot.datas['emojis']['loading']} It may takes several time if the server is large..")
-            for user in self.bot.db[str(ctx.guild.id)]["users"]:
-                self.bot.db[str(ctx.guild.id)]["users"][user]["to"] = set()
-                self.bot.db[str(ctx.guild.id)]["users"][user]["to_all"] = set()
-            await ctx.send(":recycle: All cached data has deleted successfully!")
-        else:  # 特定ユーザー分
-            target_users = []
-            for target_user in ctx.message.mentions:
-                target_users.append(str(target_user.id))
-                if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
-                    self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] = set()
-                    self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
-            mentions_text = "<@" + "> <@".join(target_users) + ">"
-            await ctx.send(f":recycle: All cached data of {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
+    @invite_role.command(name="code", aliase=["invite"])
+    async def invite_role_code(self, ctx, code, role_id):
+        pass  # 設定する
 
     def parse_max_uses(self, max_uses: int) -> str:
         if max_uses == 0:
