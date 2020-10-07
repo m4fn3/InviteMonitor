@@ -39,7 +39,12 @@ class Invite(commands.Cog):
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_del']} Invite Deleted", color=0xff8c00)
                 embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@'+str(inviter)+'>' if inviter else 'Unknown'} has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
-                embed.add_field(name="Inviter", value=f"{invite.inviter}")
+                if (user := self.bot.get_user(inviter)) is None:
+                    try:
+                        user = await self.bot.fetch_user(inviter)
+                    except:
+                        user = "Unknown"
+                embed.add_field(name="Inviter", value=f"{user}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
 
     @commands.Cog.listener()
@@ -81,7 +86,7 @@ class Invite(commands.Cog):
                             inviter = "Unknown"
                     embed.description = f"<@{member.id}> has joined through [{res[1]}](https://discord.gg/{res[1]}) made by <@{inviter.id}>"
                     embed.add_field(name="User", value=f"{member}")
-                    embed.add_field(name="Invite", value=f"{res[1]} - {inviter}")
+                    embed.add_field(name="Invite", value=f"{res[1]} | {inviter}")
                 else:
                     embed.description = f"<@{member.id}> has joined"
                     embed.add_field(name="User", value=f"{member}")
@@ -123,7 +128,7 @@ class Invite(commands.Cog):
                             inviter = "Unknown"
                     embed.description = f"<@{member.id}> invited by <@{inviter.id}> has left"
                     embed.add_field(name="User", value=f"{member}")
-                    embed.add_field(name="Invite", value=f"{invite_code} - {inviter}")
+                    embed.add_field(name="Invite", value=f"{invite_code} | {inviter}")
                 now = datetime.datetime.now(datetime.timezone.utc)
                 embed.timestamp = now
                 delta = now - pytz.timezone('UTC').localize(member.joined_at)
