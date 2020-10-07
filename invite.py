@@ -13,7 +13,7 @@ class Invite(commands.Cog):
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(":placard: Missing required arguments!")
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error[:1900]}```")
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):

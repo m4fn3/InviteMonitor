@@ -15,7 +15,7 @@ class Manage(commands.Cog):
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(":placard: Missing required arguments!")
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error[:1900]}```")
 
     @commands.command(usage="kick [@user]", description="Kick the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)

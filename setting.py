@@ -14,7 +14,7 @@ class Setting(commands.Cog):
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(":placard: Missing required arguments!")
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error[:1900]}```")
 
     @commands.command(usage="enable (#channel)", description="Start monitor invites and report logs to specified channel. If no channel provided, set to command executed channel.")
     async def enable(self, ctx):
