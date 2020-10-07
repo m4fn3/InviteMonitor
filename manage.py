@@ -66,9 +66,12 @@ class Manage(commands.Cog):
                 await invite.delete()
         await ctx.send(":magic_wand: <@" + "> <@".join(target_users) + "> has banned successfully!")
 
-    @commands.command(usage="kick_with [@user | code]", description="Kick the mentioned user and users who invited by mentioned user. Also delete invites made by them.")
+    @commands.command(usage="kick_with [@user | invite code]", description="Kick the users who invited with mentioned user or spcified invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick_with(self, ctx):
+        # そのサーバーでログが設定されているか確認
+        if self.bot.db[str(ctx.guild.id)]["channel"] is None:
+            return await ctx.send(f":warning: Log channel haven't set yet. Please setup by `{self.bot.PREFIX}enable` command before checking status.")
         # 権限を確認
         if not ctx.guild.me.guild_permissions.kick_members:
             return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
@@ -113,9 +116,12 @@ class Manage(commands.Cog):
                 await invite.delete()
         await ctx.send(":magic_wand: <@" + "> <@".join(target_checked) + "> has kicked successfully!")
 
-    @commands.command(usage="ban_with [@user]", description="Ban the mentioned user and users who invited by mentioned user. Also delete invites made by them.")
+    @commands.command(usage="ban_with [@user | code]", description="Ban the users who invited with mentioned user or spcified invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban_with(self, ctx):
+        # そのサーバーでログが設定されているか確認
+        if self.bot.db[str(ctx.guild.id)]["channel"] is None:
+            return await ctx.send(f":warning: Log channel haven't set yet. Please setup by `{self.bot.PREFIX}enable` command before checking status.")
         # 権限を確認
         if not ctx.guild.me.guild_permissions.ban_members:
             return await ctx.send(":no_entry_sign: Missing required permission **__ban_members__**!\nPlease make sure that BOT has right access.")

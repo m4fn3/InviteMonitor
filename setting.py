@@ -47,7 +47,7 @@ class Setting(commands.Cog):
     async def status(self, ctx):
         # そのサーバーでログが設定されているか確認
         if self.bot.db[str(ctx.guild.id)]["channel"] is None:
-            return await ctx.send(f"Log channel haven't set yet. Please setup by `{self.bot.PREFIX}enable` command before checking status.")
+            return await ctx.send(f":warning: Log channel haven't set yet. Please setup by `{self.bot.PREFIX}enable` command before checking status.")
         if not ctx.message.mentions:
             # 設定を取得
             embed = discord.Embed(title=":chart_with_downwards_trend: Log Settings Status", color=0x9932cc)
