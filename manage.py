@@ -43,7 +43,8 @@ class Manage(commands.Cog):
         for invite in await ctx.guild.invites():
             if str(invite.inviter.id) in target_users:
                 await invite.delete()
-        await ctx.send(":magic_wand: <@" + "> <@".join(target_users) + "> has kicked successfully!")
+        mentions_text = "<@" + "> <@".join(target_users) + ">"
+        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
     @commands.command(usage="ban [@user]", description="Ban the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -71,7 +72,8 @@ class Manage(commands.Cog):
         for invite in await ctx.guild.invites():
             if str(invite.inviter.id) in target_users:
                 await invite.delete()
-        await ctx.send(":magic_wand: <@" + "> <@".join(target_users) + "> has banned successfully!")
+        mentions_text = "<@" + "> <@".join(target_users) + ">"
+        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
 
     @commands.command(usage="kick_with [@user | invite code]", description="Kick the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -181,7 +183,7 @@ class Manage(commands.Cog):
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
         mentions_text = "<@" + "> <@".join(target_checked) + ">"
-        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
+        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
 
 
 def setup(bot):
