@@ -37,7 +37,8 @@ class InvStat(commands.Bot):
         #             "id": {
         #                 "to": {},
         #                 "to_all": {}, 
-        #                 "from": 113131
+        #                 "from": 113131,
+        #                 "code": "XyzABCopQ"
         #             }
         #         }
         #     }

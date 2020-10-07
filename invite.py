@@ -57,7 +57,8 @@ class Invite(commands.Cog):
                         self.bot.db[str(member.guild.id)]["users"][str(res[0])] = {
                             "to_all": {member.id},
                             "to": {member.id},
-                            "from": None
+                            "from": None,
+                            "code": None
                         }
                     else:
                         self.bot.db[str(member.guild.id)]["users"][str(res[0])]["to"].add(member.id)
@@ -67,10 +68,12 @@ class Invite(commands.Cog):
                         self.bot.db[str(member.guild.id)]["users"][str(member.id)] = {
                             "to_all": set(),
                             "to": set(),
-                            "from": res[0]
+                            "from": res[0],
+                            "code": res[1]
                         }
                     else:
                         self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] = res[0]
+                        self.bot.db[str(member.guild.id)]["users"][str(member.id)]["code"] = res[1]
                     if (inviter := self.bot.get_user(res[0])) is None:
                         try:
                             inviter = await self.bot.fetch_user(res[0])
@@ -102,12 +105,15 @@ class Invite(commands.Cog):
             if self.bot.check_permission(member.guild.me):
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['member_leave']} Member Left", color=0xff1493)
                 embed.set_thumbnail(url=member.avatar_url)
+                # メンバーがデータベース上に存在しないか、招待元がNoneの場合
                 if (str(member.id) not in self.bot.db[str(member.guild.id)]["users"]) or (self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] is None):
                     embed.description = f"<@{member.id}> has left"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"Unknown")
                 else:
                     inviter_id = self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"]
+                    invite_code = self.bot.db[str(member.guild.id)]["users"][str(member.id)]["code"]
+                    # 招待者がデータに登録されており、招待者の招待先にその人が登録されているなら、現在も入っているメンバーのリストから削除
                     if str(inviter_id) in self.bot.db[str(member.guild.id)]["users"] and member.id in self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to"] and member.id in self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to_all"]:
                         self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to"].remove(member.id)
                     if (inviter := self.bot.get_user(inviter_id)) is None:
@@ -117,7 +123,7 @@ class Invite(commands.Cog):
                             inviter = "Unknown"
                     embed.description = f"<@{member.id}> invited by <@{inviter.id}> has left"
                     embed.add_field(name="User", value=f"{member}")
-                    embed.add_field(name="Invite", value=f"{inviter}")
+                    embed.add_field(name="Invite", value=f"{invite_code} - {inviter}")
                 now = datetime.datetime.now(datetime.timezone.utc)
                 embed.timestamp = now
                 delta = now - pytz.timezone('UTC').localize(member.joined_at)
