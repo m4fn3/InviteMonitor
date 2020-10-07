@@ -202,7 +202,8 @@ class Invite(commands.Cog):
             for invite in await ctx.guild.invites():
                 if invite.inviter.id in target_users:
                     await invite.delete()
-            await ctx.send(f"All server invites created by <@" + "> <@".join(target_users) + "> has deleted successfully!")
+            mentions_text = "<@" + "> <@".join(target_users) + ">"
+            await ctx.send(f"All server invites created by {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
 
     @commands.command(aliases=["clear_caches"], usage="clear_cache (@user)", description="Delete invited counts data of mentioned user. If no user mentioned, delete data of all server members.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -234,7 +235,8 @@ class Invite(commands.Cog):
                 if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
                     self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] = set()
                     self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
-            await ctx.send(f"All cached data of <@" + "> <@".join(target_users) + "> has deleted successfully!")
+            mentions_text = "<@" + "> <@".join(target_users) + ">"
+            await ctx.send(f"All cached data of {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
 
     def parse_max_uses(self, max_uses: int) -> str:
         if max_uses == 0:
