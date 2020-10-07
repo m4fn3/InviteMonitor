@@ -23,8 +23,8 @@ class Invite(commands.Cog):
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_add']} Invite Created", color=0x00ff7f)
                 embed.description = f"Invite [{invite.code}]({invite.url}) has been created by <@{invite.inviter.id}>"
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
-                embed.add_field(name="MaxUses", value=f"{self.parse_max_uses(invite.max_uses)}")
-                embed.add_field(name="MaxAge", value=f"{self.parse_max_age(invite.max_age)}")
+                embed.add_field(name="MaxUses / MaxAge", value=f"{self.parse_max_uses(invite.max_uses)} times | {self.parse_max_age(invite.max_age)}")
+                embed.add_field(name="Inviter", value=f"{invite.inviter}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
 
     @commands.Cog.listener()
@@ -39,6 +39,7 @@ class Invite(commands.Cog):
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_del']} Invite Deleted", color=0xff8c00)
                 embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@'+str(inviter)+'>' if inviter else 'Unknown'} has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
+                embed.add_field(name="Inviter", value=f"{invite.inviter}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
 
     @commands.Cog.listener()
