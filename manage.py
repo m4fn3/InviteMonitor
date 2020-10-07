@@ -69,40 +69,52 @@ class Manage(commands.Cog):
     @commands.command(usage="kick_with [@user | code]", description="Kick the mentioned user and users who invited by mentioned user. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick_with(self, ctx):
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.kick_members:
-            return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.kick_members:
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
-        if not ctx.message.mentions:
-            return await ctx.send(":warning: Please mention at least one user!")
-        mentions = {user.id for user in ctx.message.mentions}
-        clean_text = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", " ", ctx.message.content.split("", 1)[1])
-        clean_text = re.sub(r"<@!?\d+>", " ", clean_text)
-        invites = set(clean_text.split())
-        # 指定されたユーザーに招待された人のIDのリストを作成
-        target_users = set()
-        for user in self.bot.db[str(ctx.guild.id)]["users"]:
-            # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
-            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in invites):
-                target_users.add(int(user))
-        target_users = target_users.union(mentions)
-        # Kickに成功した人のみのリストを作成
-        target_checked = set()
-        for target in target_users:
-            try:
-                await ctx.guild.get_member(target).kick()
-            except:
-                print(traceback2.format_exc())
-                await ctx.send(f":x: Failed to kick user <@{target}>")
-            else:
-                target_checked.add(str(target))
-        if not target_checked:
-            return
-        for invite in await ctx.guild.invites():
-            if str(invite.inviter.id) in target_checked:
-                await invite.delete()
-        await ctx.send(":magic_wand: <@" + "> <@".join(target_checked) + "> has banned successfully!")
+        try:
+            # 権限を確認
+            if not ctx.guild.me.guild_permissions.kick_members:
+                return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
+            if not ctx.author.guild_permissions.kick_members:
+                return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            if len(ctx.message.content.split()) == 1:
+                return await ctx.send(":warning: Please specify at least one user or invite code!")
+            mentions = {user.id for user in ctx.message.mentions}
+            clean_text = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", " ", ctx.message.content.split(" ", 1)[1])
+            clean_text = re.sub(r"<@!?\d+>", " ", clean_text)
+            invites = set(clean_text.split())
+            target_users = set()
+            error_msg = ""
+            # 招待コードが有効であることを確認する,有効あらばリンクの作成者を対象者に追加
+            for invite in invites:
+                if invite not in self.bot.cache[str(ctx.guild.id)]:
+                    error_msg += f":x: `{invite}` is invalid invite code.\n"
+                    invites.remove(invite)
+                else:
+                    target_users.add(self.bot.cache[str(ctx.guild.id)][invite]["author"])
+            # 指定されたユーザーに招待された人のIDのリストを作成
+            for user in self.bot.db[str(ctx.guild.id)]["users"]:
+                # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
+                if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in invites):
+                    target_users.add(int(user))
+            target_users = target_users.union(mentions)
+            # Kickに成功した人のみのリストを作成
+            target_checked = set()
+            for target in target_users:
+                try:
+                    await ctx.guild.get_member(target).kick()
+                except:
+                    error_msg += f":x: Failed to kick user <@{target}>\n"
+                else:
+                    target_checked.add(str(target))
+            if not target_checked:
+                return
+            elif error_msg != "":
+                await ctx.send(error_msg)
+            for invite in await ctx.guild.invites():
+                if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
+                    await invite.delete()
+            await ctx.send(":magic_wand: <@" + "> <@".join(target_checked) + "> has kicked successfully!")
+        except:
+            print(traceback2.format_exc())
 
     @commands.command(usage="ban_with [@user]", description="Ban the mentioned user and users who invited by mentioned user. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)

@@ -85,7 +85,7 @@ class InvStat(commands.Bot):
     def clear_server(self, guild_id):
         # データベース,キャッシュからサーバーのデータを削除
         del self.db[str(guild_id)]
-        del self.cache[guild_id]
+        del self.cache[str(guild_id)]
 
     async def update_server_cache(self, guild):
         # サーバーの招待情報のキャッシュを更新
