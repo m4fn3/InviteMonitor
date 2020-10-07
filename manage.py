@@ -73,7 +73,7 @@ class Manage(commands.Cog):
                 await invite.delete()
         await ctx.send(":magic_wand: <@" + "> <@".join(target_users) + "> has banned successfully!")
 
-    @commands.command(usage="kick_with [@user | invite code]", description="Kick the users who invited with mentioned user or spcified invite code. Also delete invites made by them.")
+    @commands.command(usage="kick_with [@user | invite code]", description="Kick the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick_with(self, ctx):
         # そのサーバーでログが設定されているか確認
@@ -119,14 +119,16 @@ class Manage(commands.Cog):
             else:
                 target_checked.add(str(target))
         if error_msg != "":
-            await ctx.send(error_msg)
+            await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
             return await ctx.send(":mag: No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
-        await ctx.send(":magic_wand: <@" + "> <@".join(target_checked) + "> has kicked successfully!")
-    @commands.command(usage="ban_with [@user | code]", description="Ban the users who invited with mentioned user or spcified invite code. Also delete invites made by them.")
+        mentions_text = "<@" + "> <@".join(target_checked) + ">"
+        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
+
+    @commands.command(usage="ban_with [@user | code]", description="Ban the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban_with(self, ctx):
         # そのサーバーでログが設定されているか確認
@@ -172,13 +174,14 @@ class Manage(commands.Cog):
             else:
                 target_checked.add(str(target))
         if error_msg != "":
-            await ctx.send(error_msg)
+            await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
             return await ctx.send(":mag: No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
-        await ctx.send(":magic_wand: <@" + "> <@".join(target_checked) + "> has banned successfully!")
+        mentions_text = "<@" + "> <@".join(target_checked) + ">"
+        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
 
 def setup(bot):
