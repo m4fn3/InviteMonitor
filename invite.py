@@ -100,7 +100,7 @@ class Invite(commands.Cog):
                     delta = f"**{delta.days}days {delta.seconds // 3600}hours**"
                 else:
                     delta = f"{delta.days // 30}months {delta.seconds % 30}days"
-                embed.add_field(name="Account Created", value=f"{delta} ago")
+                embed.add_field(name="Account Created", value=f"{delta} ago", inline=False)
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
                 await self.bot.get_channel(target_channel).send(embed=embed)
 
@@ -138,7 +138,7 @@ class Invite(commands.Cog):
                     delta = f"{delta.days}days {delta.seconds // 3600}hours"
                 else:
                     delta = f"{delta.days // 30}months {delta.seconds % 30}days"
-                embed.add_field(name="Stayed Time", value=f"{delta}")
+                embed.add_field(name="Stayed Time", value=f"{delta}", inline=False)
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
                 await self.bot.get_channel(target_channel).send(embed=embed)
 
