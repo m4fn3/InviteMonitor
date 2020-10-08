@@ -24,7 +24,8 @@ class InvStat(commands.Bot):
                 "invite_add": "<:invite_add:762303590365921280>",
                 "invite_del": "<:invite_del:762303590529892432>",
                 "member_join": "<:member_join:762305608271265852>",
-                "member_leave": "<:member_leave:762305607625605140>"
+                "member_leave": "<:member_leave:762305607625605140>",
+                "no_mag": "<:no_mag:763683888236986388>"
             }
         }
         with open("database.pkl", "rb") as db:
@@ -51,7 +52,7 @@ class InvStat(commands.Bot):
         #         }
         #     }
         # }
-        self.bot_cogs = ["developer", "invite", "setting", "manage"]
+        self.bot_cogs = ["developer", "invite", "setting", "manage", "cache"]
         for cog in self.bot_cogs:
             self.load_extension(cog)
         self.uptime = time.time()
@@ -87,7 +88,11 @@ class InvStat(commands.Bot):
         # データベースにサーバー情報を追加
         self.db[str(guild_id)] = {
             "channel": None,
-            "users": {}
+            "users": {},
+            "roles": {
+                "code": {},
+                "user": {}
+            }
         }
 
     def clear_server(self, guild_id):

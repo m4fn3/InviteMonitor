@@ -15,7 +15,7 @@ class Manage(commands.Cog):
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(":placard: Missing required arguments!")
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error[:1900]}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
     @commands.command(usage="kick [@user]", description="Kick the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
@@ -123,7 +123,7 @@ class Manage(commands.Cog):
         if error_msg != "":
             await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
-            return await ctx.send(":mag: No user found.")
+            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
@@ -178,7 +178,7 @@ class Manage(commands.Cog):
         if error_msg != "":
             await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
-            return await ctx.send(":mag: No user found.")
+            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()

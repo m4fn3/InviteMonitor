@@ -1,5 +1,5 @@
 from discord.ext import commands
-import asyncio, discord, traceback2, datetime, pytz
+import discord, traceback2, datetime, pytz, re, asyncio
 from main import InvStat
 
 class Invite(commands.Cog):
@@ -12,8 +12,18 @@ class Invite(commands.Cog):
             await ctx.send(f":hourglass_flowing_sand: Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(":placard: Missing required arguments!")
+        elif isinstance(error, Exception):
+            pass
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error[:1900]}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
+
+    async def catch_user(self, user_id: int):
+        if (user := self.bot.get_user(user_id)) is None:
+            try:
+                user = await self.bot.fetch_user(user_id)
+            except:
+                user = "Unknown"
+        return user
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
@@ -39,11 +49,7 @@ class Invite(commands.Cog):
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_del']} Invite Deleted", color=0xff8c00)
                 embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@'+str(inviter)+'>' if inviter else 'Unknown'} has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
-                if (user := self.bot.get_user(inviter)) is None:
-                    try:
-                        user = await self.bot.fetch_user(inviter)
-                    except:
-                        user = "Unknown"
+                user = await self.catch_user(inviter)
                 embed.add_field(name="Inviter", value=f"{user}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 # InviteRoleに登録されたコードが削除されていないかどうか確認する
@@ -83,11 +89,7 @@ class Invite(commands.Cog):
                     else:
                         self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] = res[0]
                         self.bot.db[str(member.guild.id)]["users"][str(member.id)]["code"] = res[1]
-                    if (inviter := self.bot.get_user(res[0])) is None:
-                        try:
-                            inviter = await self.bot.fetch_user(res[0])
-                        except:
-                            inviter = "Unknown"
+                    inviter = await self.catch_user(res[0])
                     embed.description = f"<@{member.id}> has joined through [{res[1]}](https://discord.gg/{res[1]}) made by <@{inviter.id}>"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"{res[1]} | {inviter}")
@@ -109,30 +111,45 @@ class Invite(commands.Cog):
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 if member.guild.me.guild_permissions.manage_roles:  # ロール管理権限がある場合
                     if res[0] in self.bot.db[str(member.guild.id)]["roles"]["user"]:  # 招待者が設定されている場合
-                        role_id = self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]
-                        target_role = member.guild.get_role(role_id)
-                        if target_role is None:  # 役職を取得できない場合
-                            await self.bot.get_channel(target_channel).send(f":warning: Role `{role_id}` was not found, so this trigger is no longer available!")
+                        roles = self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]
+                        target_role = []
+                        for role_id in roles:
+                            if (role := member.guild.get_role(role_id)) is not None:
+                                target_role.append(role)
+                        error_msg = ""
+                        if not target_role:  # 役職を取得できない場合
+                            await self.bot.get_channel(target_channel).send(f":warning: Roles were not found, so code trigger **{res[0]}** is no longer available!")
                             del self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]  # 削除する
                         else:
                             try:
-                                await member.add_roles(target_role)
+                                await member.add_roles(*target_role)  # リストのロールオブジェクトをそれぞれ指定
                             except:
-                                pass
+                                error_msg += f":x: Failed to add role `{','.join([role.name for role in target_role])}` of user trigger **{res[0]}**\nPlease check position of role! These may be higher role than I have.\n"
+                        if error_msg != "":
+                            await self.bot.get_channel(target_channel).send(error_msg)
+
                     elif res[1] in self.bot.db[str(member.guild.id)]["roles"]["code"]:
-                        role_id = self.bot.db[str(member.guild.id)]["roles"]["code"][res[1]]
-                        target_role = member.guild.get_role(role_id)
-                        if target_role is None:  # 役職を取得できない場合
-                            await self.bot.get_channel(target_channel).send(f":warning: Role `{role_id}` was not found, so this trigger is no longer available!")
+                        roles = self.bot.db[str(member.guild.id)]["roles"]["code"][res[1]]
+                        target_role = []
+                        for role_id in roles:
+                            if (role := member.guild.get_role(role_id)) is not None:
+                                target_role.append(role)
+                        error_msg = ""
+                        if not target_role:  # 役職を取得できない場合
+                            await self.bot.get_channel(target_channel).send(f":warning: Roles were not found, so user trigger **{res[1]}** is no longer available!")
                             del self.bot.db[str(member.guild.id)]["roles"]["code"][res[1]]  # 削除する
                         else:
                             try:
-                                await member.add_roles(target_role)
+                                await member.add_roles(*target_role)  # リストのロールオブジェクトをそれぞれ指定
                             except:
-                                pass
+                                error_msg += f":x: Failed to add role `{','.join([role.name for role in target_role])}` of code trigger **{res[1]}**\nPlease check position of role! These may be higher role than I have.\n"
+                        if error_msg != "":
+                            await self.bot.get_channel(target_channel).send(error_msg)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
+        if member.id == self.bot.user.id:
+            return
         if (target_channel := self.bot.db[str(member.guild.id)]["channel"]) is not None:
             if self.bot.check_permission(member.guild.me):
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['member_leave']} Member Left", color=0xff1493)
@@ -148,11 +165,7 @@ class Invite(commands.Cog):
                     # 招待者がデータに登録されており、招待者の招待先にその人が登録されているなら、現在も入っているメンバーのリストから削除
                     if str(inviter_id) in self.bot.db[str(member.guild.id)]["users"] and member.id in self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to"] and member.id in self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to_all"]:
                         self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to"].remove(member.id)
-                    if (inviter := self.bot.get_user(inviter_id)) is None:
-                        try:
-                            inviter = await self.bot.fetch_user(inviter_id)
-                        except:
-                            inviter = "Unknown"
+                    inviter = await self.catch_user(inviter_id)
                     embed.description = f"<@{member.id}> invited by <@{inviter.id}> has left"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"{invite_code} | {inviter}")
@@ -198,17 +211,143 @@ class Invite(commands.Cog):
                     invite_text += new_invite_text
             await ctx.send(invite_text)
 
-    @commands.group()
-    async def invite_role(self, ctx):
-        pass  # リストを表示
+    @commands.group(usage="code_trigger", description="Make trigger to give the role to users who joined with specific invite code.")
+    async def code_trigger(self, ctx):
+        # 設定前に権限を確認
+        if not ctx.guild.me.guild_permissions.manage_roles:
+            ctx.command.reset_cooldown(ctx)
+            await ctx.send(":no_entry_sign: Missing required permission **__manage_roles__**!\nPlease make sure that BOT has right access.")
+            raise Exception("Permission Error")
+        if not ctx.author.guild_permissions.manage_roles:
+            ctx.command.reset_cooldown(ctx)
+            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            raise Exception("Permission Error")
+        if ctx.invoked_subcommand is None:
+            embed = discord.Embed(title="Code triggers")
 
-    @invite_role.command(name="user", aliase=["inviter"])
-    async def invite_role_user(self, ctx, user_id, role_id):
-        pass  # 設定する
+    @code_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def code_trigger_add(self, ctx, code, role):
+        # 数を確認
+        if len(self.bot.db[str(ctx.guild.id)]["roles"]["code"]) == 5:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(":x: You already have 5 triggers! Please delete trigger before make new one.")
+        # 招待コードを取得
+        target_code = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", "", code)
+        if target_code not in self.bot.cache[str(ctx.guild.id)]:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} Invalid code was specified.")
+        target_role = self.get_roles_from_string(role, ctx.guild)
+        if not target_role:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} Role not found. Please make sure that role exists.")
+        elif len(target_role) > 5:
+            return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
+        if target_code in self.bot.db[str(ctx.guild.id)]["roles"]["code"]:  # 既に設定されている場合は確認する
+            await ctx.send(f":warning: Invite code **{code}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
 
-    @invite_role.command(name="code", aliase=["invite"])
-    async def invite_role_code(self, ctx, code, role_id):
-        pass  # 設定する
+            def check(m):
+                return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=30)
+                if msg.content not in ["yes", "y", "'yes'"]:
+                    return await ctx.send(":negative_squared_cross_mark: Command canceled!")
+            except asyncio.TimeoutError:
+                return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
+        self.bot.db[str(ctx.guild.id)]["roles"]["code"][target_code] = target_role
+        await ctx.send(f"{self.bot.datas['emojis']['invite_add']} Code trigger has created successfully!")
+
+    @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def code_trigger_remove(self, ctx, index):
+        if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["code"]):
+            key_list = list(self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys())
+            del self.bot.db[str(ctx.guild.id)]["roles"]["code"][key_list[int(index) - 1]]
+            await ctx.send(f"{self.bot.datas['emojis']['invite_del']} Code trigger **{index}** has deleted successfully!")
+        else:
+            await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {len(self.bot.db[str(ctx.guild.id)]['roles']['code'])}.")
+
+    @commands.group(usage="user_trigger", description="Make trigger to give the role to users who invited by specific user.")
+    async def user_trigger(self, ctx):
+        # 設定前に権限を確認
+        if not ctx.guild.me.guild_permissions.manage_roles:
+            ctx.command.reset_cooldown(ctx)
+            await ctx.send(":no_entry_sign: Missing required permission **__manage_roles__**!\nPlease make sure that BOT has right access.")
+            raise Exception("Permission Error")
+        if not ctx.author.guild_permissions.manage_roles:
+            ctx.command.reset_cooldown(ctx)
+            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            raise Exception("Permission Error")
+        if ctx.invoked_subcommand is None:
+            embed = discord.Embed(title="Inviter User ⇒ Role Settings")
+
+    @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def user_trigger_add(self, ctx, user, *, role):
+        # 数を確認
+        if len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]) == 5:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(":x: You already have 5 triggers! Please delete trigger before make new one.")
+        # ユーザーを取得
+        target_user = self.get_user_from_string(user, ctx.guild)
+        if target_user is None:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} User not found. Please make sure that user exists.")
+        target_role = self.get_roles_from_string(role, ctx.guild)
+        if not target_role:
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} Role not found. Please make sure that role exists.")
+        elif len(target_role) > 5:
+            return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
+        if target_user in self.bot.db[str(ctx.guild.id)]["roles"]["user"]:  # 既に設定されている場合は確認する
+            await ctx.send(f":warning: User **{user}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
+
+            def check(m):
+                return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
+            try:
+                msg = await self.bot.wait_for('message', check=check, timeout=30)
+                if msg.content not in ["yes", "y", "'yes'"]:
+                    return await ctx.send(":negative_squared_cross_mark: Command canceled!")
+            except asyncio.TimeoutError:
+                return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
+        self.bot.db[str(ctx.guild.id)]["roles"]["user"][target_user] = target_role
+        await ctx.send(f"{self.bot.datas['emojis']['invite_add']} User trigger has created successfully!")
+
+    @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    async def user_trigger_remove(self, ctx, index):
+        if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]):
+            key_list = list(self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys())
+            del self.bot.db[str(ctx.guild.id)]["roles"]["user"][key_list[int(index) - 1]]
+            await ctx.send(f"{self.bot.datas['emojis']['invite_del']} User trigger **{index}** has deleted successfully!")
+        else:
+            await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {len(self.bot.db[str(ctx.guild.id)]['roles']['user'])}.")
+
+    def get_user_from_string(self, user_string, guild):
+        target_user: str
+        if (user_match := re.match(r"<@!?(\d+)>", user_string)) is not None:  # メンションの場合
+            return user_match.group()
+        elif user_string.isdigit() and ((user := discord.utils.get(guild.members, id=int(user_string))) is not None):
+            return str(user.id)
+        else:  # 名前で検索
+            if (user := discord.utils.get(guild.members, name=user_string)) is not None:
+                return str(user.id)
+            else:  # 見つからなかった場合
+                return None
+
+    def get_roles_from_string(self, role_text, guild):
+        role_texts = role_text.split()
+        roles = []
+        for role_string in role_texts:  # それぞれを確認していく
+            target_user: str
+            if (user_match := re.match(r"<@&(\d+)>", role_string)) is not None:  # メンションの場合
+                roles.append(int(user_match.group()))
+            elif role_string.isdigit() and ((role := discord.utils.get(guild.roles, id=int(role_string))) is not None):
+                roles.append(role.id)
+            else:  # 名前で検索
+                if (role := discord.utils.get(guild.roles, name=role_string)) is not None:
+                    roles.append(role.id)
+        return roles
 
     def parse_max_uses(self, max_uses: int) -> str:
         if max_uses == 0:

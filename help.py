@@ -9,7 +9,7 @@ class Help(commands.HelpCommand):
     async def send_bot_help(self, mapping) -> None:
         cogs: list
         page = 1
-        cogs = ["Setting", "Invite", "Manage"]
+        cogs = ["Setting", "Invite", "Manage", "Cache"]
         embed_org = discord.Embed(title=f"{self.context.bot.user.name} Usage", color=0x00ff00)
         embed_org.description = f"`{self.context.bot.PREFIX}help (command name)` to see detailed description of the command!" + self.description_text.format(self.context.bot.datas['server'])
         for cog_name in cogs:

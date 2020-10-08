@@ -14,7 +14,7 @@ class Cache(commands.Cog):
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(":placard: Missing required arguments!")
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{error[:1900]}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
     @commands.command(aliases=["clear_invite"], usage="clear_invites (@user)", description="Delete invite url/codes made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
