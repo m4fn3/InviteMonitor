@@ -224,6 +224,12 @@ class Invite(commands.Cog):
             raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code triggers")
+            embed.description = f"trigger index | trigger name\n> {self.bot.get_command('code_trigger add').usage} ... Add trigger\n> {self.bot.get_command('code_trigger remove').usage} .. Delete trigger"
+            count = 1
+            for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys():
+                roles = self.bot.db[str(ctx.guild.id)]["roles"]["code"][trigger_name]
+                embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
+            await ctx.send(embed=embed)
 
     @code_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -279,7 +285,13 @@ class Invite(commands.Cog):
             await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
             raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
-            embed = discord.Embed(title="Inviter User ⇒ Role Settings")
+            embed = discord.Embed(title="User triggers")
+            embed.description = f"trigger index | trigger name\n> {self.bot.get_command('user_trigger add').usage} ... Add trigger\n> {self.bot.get_command('user_trigger remove').usage} .. Delete trigger"
+            count = 1
+            for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys():
+                roles = self.bot.db[str(ctx.guild.id)]["roles"]["user"][trigger_name]
+                embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
+            await ctx.send(embed=embed)
 
     @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
     @commands.cooldown(1, 5, commands.BucketType.guild)
