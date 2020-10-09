@@ -220,15 +220,16 @@ class Invite(commands.Cog):
             raise Exception("Permission Error")
         if not ctx.author.guild_permissions.manage_roles:
             ctx.command.reset_cooldown(ctx)
-            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permission!\nFor security reasons, this command can only be used by person who have permission.")
             raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code triggers")
-            embed.description = f"trigger index | trigger name\n> {self.bot.get_command('code_trigger add').usage} ... Add trigger\n> {self.bot.get_command('code_trigger remove').usage} .. Delete trigger"
+            embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.datas['emojis']['invite_add']} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.datas['emojis']['invite_del']} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
             count = 1
             for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys():
                 roles = self.bot.db[str(ctx.guild.id)]["roles"]["code"][trigger_name]
                 embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
+            embed.set_footer(text=f"Total {count - 1} code triggers")
             await ctx.send(embed=embed)
 
     @code_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
@@ -282,15 +283,17 @@ class Invite(commands.Cog):
             raise Exception("Permission Error")
         if not ctx.author.guild_permissions.manage_roles:
             ctx.command.reset_cooldown(ctx)
-            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permission!\nFor security reasons, this command can only be used by person who have permission.")
             raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers")
-            embed.description = f"trigger index | trigger name\n> {self.bot.get_command('user_trigger add').usage} ... Add trigger\n> {self.bot.get_command('user_trigger remove').usage} .. Delete trigger"
+            embed.description = f"If user invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.datas['emojis']['invite_add']} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.datas['emojis']['invite_del']} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
             count = 1
             for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys():
                 roles = self.bot.db[str(ctx.guild.id)]["roles"]["user"][trigger_name]
                 embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
+                count += 1
+            embed.set_footer(text=f"Total {count - 1} user triggers")
             await ctx.send(embed=embed)
 
     @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
