@@ -229,12 +229,13 @@ class Invite(commands.Cog):
             for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys():
                 roles = self.bot.db[str(ctx.guild.id)]["roles"]["code"][trigger_name]
                 embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
-            embed.set_footer(text=f"Total {count - 1} code triggers")
+                count += 1
+            embed.set_footer(text=f"Total {count - 1} code triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
-    @code_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
+    @code_trigger.command(name="add", usage="user_trigger add [invite code] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
     @commands.cooldown(1, 5, commands.BucketType.guild)
-    async def code_trigger_add(self, ctx, code, role):
+    async def code_trigger_add(self, ctx, code, *, role):
         # 数を確認
         if len(self.bot.db[str(ctx.guild.id)]["roles"]["code"]) == 5:
             ctx.command.reset_cooldown(ctx)
@@ -287,13 +288,13 @@ class Invite(commands.Cog):
             raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers")
-            embed.description = f"If user invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.datas['emojis']['invite_add']} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.datas['emojis']['invite_del']} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
+            embed.description = f"If participant invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.datas['emojis']['invite_add']} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.datas['emojis']['invite_del']} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
             count = 1
             for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys():
                 roles = self.bot.db[str(ctx.guild.id)]["roles"]["user"][trigger_name]
                 embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
                 count += 1
-            embed.set_footer(text=f"Total {count - 1} user triggers")
+            embed.set_footer(text=f"Total {count - 1} user triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
     @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
