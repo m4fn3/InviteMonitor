@@ -80,7 +80,7 @@ class Manage(commands.Cog):
     async def kick_with(self, ctx):
         # そのサーバーでログが設定されているか確認
         if self.bot.db[str(ctx.guild.id)]["channel"] is None:
-            return await ctx.send(f":warning: Log channel haven't set yet. Please setup by `{self.bot.PREFIX}enable` command before checking status.")
+            return await ctx.send(f":warning: Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
         # 権限を確認
         if not ctx.guild.me.guild_permissions.kick_members:
             ctx.command.reset_cooldown(ctx)
@@ -135,7 +135,7 @@ class Manage(commands.Cog):
     async def ban_with(self, ctx):
         # そのサーバーでログが設定されているか確認
         if self.bot.db[str(ctx.guild.id)]["channel"] is None:
-            return await ctx.send(f":warning: Log channel haven't set yet. Please setup by `{self.bot.PREFIX}enable` command before checking status.")
+            return await ctx.send(f":warning: Monitoring not enabled!. Please setup by `{self.bot.PREFIX}enable` command before using this feature.")
         # 権限を確認
         if not ctx.guild.me.guild_permissions.ban_members:
             ctx.command.reset_cooldown(ctx)

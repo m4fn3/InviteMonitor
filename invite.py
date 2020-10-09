@@ -340,6 +340,7 @@ class Invite(commands.Cog):
 
     def get_user_from_string(self, user_string, guild):
         target_user: str
+        user = None
         if (user_match := re.match(r"<@!?(\d+)>", user_string)) is not None:  # メンションの場合
             return user_match.group()
         elif user_string.isdigit() and ((user := discord.utils.get(guild.members, id=int(user_string))) is not None):
@@ -355,6 +356,7 @@ class Invite(commands.Cog):
         roles = []
         for role_string in role_texts:  # それぞれを確認していく
             target_user: str
+            role = None
             if (user_match := re.match(r"<@&(\d+)>", role_string)) is not None:  # メンションの場合
                 roles.append(int(user_match.group()))
             elif role_string.isdigit() and ((role := discord.utils.get(guild.roles, id=int(role_string))) is not None):
