@@ -1,12 +1,12 @@
 from discord.ext import commands
 import discord, asyncio
-from main import InvStat
+from main import InviteMonitor
 
 class Cache(commands.Cog):
     """__Clear cached datas__"""
 
     def __init__(self, bot):
-        self.bot = bot  # type: InvStat
+        self.bot = bot  # type: InviteMonitor
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):

@@ -1,11 +1,11 @@
 from discord.ext import commands
 import discord, traceback2, datetime, pytz, re, asyncio
-from main import InvStat
+from main import InviteMonitor
 
 class Invite(commands.Cog):
     """__Manage invites__"""
     def __init__(self, bot):
-        self.bot = bot  # type: InvStat
+        self.bot = bot  # type: InviteMonitor
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):

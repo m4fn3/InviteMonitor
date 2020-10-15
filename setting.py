@@ -1,12 +1,12 @@
 from discord.ext import commands
 import discord, datetime, time
-from main import InvStat
+from main import InviteMonitor
 
 class Setting(commands.Cog):
     """__SetUp the bot__"""
 
     def __init__(self, bot):
-        self.bot = bot  # type: InvStat
+        self.bot = bot  # type: InviteMonitor
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):

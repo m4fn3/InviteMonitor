@@ -5,3 +5,4 @@ asyncio
 traceback2
 python-dotenv
 pytz
+asyncpg

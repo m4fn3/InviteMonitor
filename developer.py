@@ -7,13 +7,13 @@ except:
     psutil_available = False
 else:
     psutil_available = True
-from main import InvStat
+from main import InviteMonitor
 
 
 # class
 class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot):
-        self.bot = bot  # type: InvStat
+        self.bot = bot  # type: InviteMonitor
         self._last_result = None
         try:
             import psutil

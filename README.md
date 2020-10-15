@@ -1,6 +1,6 @@
-<h1 style="margin: 5px; padding: 0px"> 🔐📎 InvStat </h1>
+<h1 style="margin: 5px; padding: 0px"> 🔐📎 InviteMonitor </h1>
 <div style="border: solid 3px orange;border-radius: 20px;padding: 10px">
-InvStat is strong server invites monitoring bot that allows you to<br>
+InviteMonitor is strong server invites monitoring bot that allows you to<br>
 ・📨 know inviter of participant<br>
 ・🔢 counts people invited by a particular user<br>
 ・🚫 kick users who invited by specified troll user<br>

@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 PREFIX = "i/"
 PREFIXES = "i/"
 
-class InvStat(commands.Bot):
+class InviteMonitor(commands.Bot):
     def __init__(self, command_prefix, help_command, intents, status, activity):
         super().__init__(command_prefix, help_command, intents=intents, status=status, activity=activity)
         self.PREFIX = PREFIX
@@ -131,5 +131,5 @@ class InvStat(commands.Bot):
 
 if __name__ == '__main__':
     intents = discord.Intents.all()
-    bot = InvStat(command_prefix=commands.when_mentioned_or(PREFIXES), help_command=Help(),intents=intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
+    bot = InviteMonitor(command_prefix=commands.when_mentioned_or(PREFIXES), help_command=Help(), intents=intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
     bot.run(os.getenv("TOKEN"))
