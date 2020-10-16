@@ -24,7 +24,7 @@ class InviteMonitor(commands.Bot):
     def __init__(self, command_prefix, help_command, intents, status, activity):
         super().__init__(command_prefix, help_command, intents=intents, status=status, activity=activity)
         self.PREFIX = PREFIX
-        # TODO: namedtuple=イミュータブルに変更 - datasは英語的に問題があるので変更
+        # TODO: namedtuple=イミュータブルに変更 - datasは英語的に問題があるので変更 (将来的にテスト環境と本場環境で分ける必要がある)
         self.datas = {
             "invite": "https://discord.com/oauth2/authorize?client_id=761820118379921440&scope=bot&permissions=-8",
             "server": "https://discord.gg/RbzSSrw",
