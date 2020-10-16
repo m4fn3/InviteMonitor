@@ -1,8 +1,8 @@
 .env
 __pycache__/
 pkl.py
-./idea
+.idea/*
 
 
 db_test/
-./database.pkl
+database.pkl
