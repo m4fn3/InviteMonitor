@@ -1,5 +1,7 @@
+import re
+
 from discord.ext import commands
-import discord, traceback2, re
+
 from main import InviteMonitor
 
 

@@ -1,6 +1,10 @@
+import datetime
+import discord
+import time
 from discord.ext import commands
-import discord, datetime, time
+
 from main import InviteMonitor
+
 
 class Setting(commands.Cog):
     """__SetUp the bot__"""
@@ -103,6 +107,7 @@ class Setting(commands.Cog):
         embed.add_field(name="URL 📎", value=f"[InviteBOT]({self.bot.datas['invite']}) | [OfficialServer]({self.bot.datas['server']})", inline=False)
         embed.set_footer(text=f"{self.bot.user.name} is powered by {self.bot.get_user(self.bot.datas['author'])} with discord.py", icon_url="http://zorba.starfree.jp/mafu.jpg")
         await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Setting(bot))

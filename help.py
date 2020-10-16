@@ -1,5 +1,8 @@
-import asyncio, discord
+import asyncio
+import discord
+
 from discord.ext import commands
+
 
 class Help(commands.HelpCommand):
     def __init__(self):
@@ -15,7 +18,7 @@ class Help(commands.HelpCommand):
         for cog_name in cogs:
             cog = discord.utils.get(mapping, qualified_name=cog_name)
             command_list = [command.name for command in await self.filter_commands(cog.get_commands())]
-            embed_org.add_field(name=cog_name, value="`"+"`, `".join(command_list)+"`", inline=False)
+            embed_org.add_field(name=cog_name, value="`" + "`, `".join(command_list) + "`", inline=False)
         message = await self.get_destination().send(embed=embed_org)
         await message.add_reaction("◀️")
         await message.add_reaction("▶️")

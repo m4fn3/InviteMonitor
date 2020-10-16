@@ -1,9 +1,16 @@
+import asyncio
+import datetime
+import discord
+import pytz
+import re
 from discord.ext import commands
-import discord, traceback2, datetime, pytz, re, asyncio
+
 from main import InviteMonitor
+
 
 class Invite(commands.Cog):
     """__Manage invites__"""
+
     def __init__(self, bot):
         self.bot = bot  # type: InviteMonitor
 
@@ -47,7 +54,7 @@ class Invite(commands.Cog):
                     inviter = self.bot.cache[str(invite.guild.id)][invite.code]['author']
                 await self.bot.update_server_cache(invite.guild)
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_del']} Invite Deleted", color=0xff8c00)
-                embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@'+str(inviter)+'>' if inviter else 'Unknown'} has deleted or expired."
+                embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@' + str(inviter) + '>' if inviter else 'Unknown'} has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
                 user = await self.catch_user(inviter)
                 embed.add_field(name="Inviter", value=f"{user}")
@@ -204,7 +211,7 @@ class Invite(commands.Cog):
                     new_invite_text = f"__**{str(target_user)} 's invite link**__\nhttps://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8\n"
                 else:
                     new_invite_text = f"{target_user} is not the bot!\n"
-                if len(invite_text+new_invite_text) > 1900:
+                if len(invite_text + new_invite_text) > 1900:
                     invite_text += "(Some invites have been omitted due to message length limit)"
                     break
                 else:
@@ -256,6 +263,7 @@ class Invite(commands.Cog):
 
             def check(m):
                 return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
+
             try:
                 msg = await self.bot.wait_for('message', check=check, timeout=30)
                 if msg.content not in ["yes", "y", "'yes'"]:
@@ -320,6 +328,7 @@ class Invite(commands.Cog):
 
             def check(m):
                 return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
+
             try:
                 msg = await self.bot.wait_for('message', check=check, timeout=30)
                 if msg.content not in ["yes", "y", "'yes'"]:

@@ -1,6 +1,9 @@
+import asyncio
+
 from discord.ext import commands
-import discord, asyncio
+
 from main import InviteMonitor
+
 
 class Cache(commands.Cog):
     """__Clear cached datas__"""
@@ -62,6 +65,7 @@ class Cache(commands.Cog):
 
             def check(m):
                 return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
+
             try:
                 msg = await self.bot.wait_for('message', check=check, timeout=30)
                 if msg.content not in ["yes", "y", "'yes'"]:
@@ -82,6 +86,7 @@ class Cache(commands.Cog):
                     self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
             mentions_text = "<@" + "> <@".join(target_users) + ">"
             await ctx.send(f":recycle: All cached data of {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
+
 
 def setup(bot):
     bot.add_cog(Cache(bot))
