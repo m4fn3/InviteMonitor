@@ -41,7 +41,7 @@ class Cache(commands.Cog):
                     return await ctx.send(":negative_squared_cross_mark: Command canceled!")
             except asyncio.TimeoutError:
                 return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
-            await ctx.send(f"{self.bot.datas['emojis']['loading']} It may takes several time if the server is large..")
+            await ctx.send(f"{self.bot.static_data['emojis']['loading']} It may takes several time if the server is large..")
             for invite in await ctx.guild.invites():
                 await invite.delete()
             await ctx.send(":recycle: All server invites has deleted successfully!")
@@ -72,7 +72,7 @@ class Cache(commands.Cog):
                     return await ctx.send(":negative_squared_cross_mark: Command canceled!")
             except asyncio.TimeoutError:
                 return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
-            await ctx.send(f"{self.bot.datas['emojis']['loading']} It may takes several time if the server is large..")
+            await ctx.send(f"{self.bot.static_data['emojis']['loading']} It may takes several time if the server is large..")
             for user in self.bot.db[str(ctx.guild.id)]["users"]:
                 self.bot.db[str(ctx.guild.id)]["users"][user]["to"] = set()
                 self.bot.db[str(ctx.guild.id)]["users"][user]["to_all"] = set()

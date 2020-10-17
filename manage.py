@@ -125,7 +125,7 @@ class Manage(commands.Cog):
         if error_msg != "":
             await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
-            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} No user found.")
+            return await ctx.send(f"{self.bot.static_data['emojis']['no_mag']} No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
@@ -180,7 +180,7 @@ class Manage(commands.Cog):
         if error_msg != "":
             await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
-            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} No user found.")
+            return await ctx.send(f"{self.bot.static_data['emojis']['no_mag']} No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()

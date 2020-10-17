@@ -3,6 +3,7 @@ import discord
 import logging
 import os
 import time
+import json
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
@@ -23,27 +24,17 @@ PREFIXES = "i/"
 class InviteMonitor(commands.Bot):
     def __init__(self, command_prefix, help_command, intents, status, activity):
         super().__init__(command_prefix, help_command, intents=intents, status=status, activity=activity)
+        self.uptime = time.time()  # 起動時刻を取得
         self.PREFIX = PREFIX
-        # TODO: namedtuple=イミュータブルに変更 - datasは英語的に問題があるので変更 (将来的にテスト環境と本場環境で分ける必要がある)
-        self.datas = {
-            "invite": "https://discord.com/oauth2/authorize?client_id=761820118379921440&scope=bot&permissions=-8",
-            "server": "https://discord.gg/RbzSSrw",
-            "author": 513136168112750593,
-            "emojis": {
-                "loading": "<a:loading:762566694572916766>",
-                "invite_add": "<:invite_add:762303590365921280>",
-                "invite_del": "<:invite_del:762303590529892432>",
-                "member_join": "<:member_join:762305608271265852>",
-                "member_leave": "<:member_leave:762305607625605140>",
-                "no_mag": "<:no_mag:763683888236986388>"
-            }
-        }
-        self.db = await asyncpg.connect(os.getenv("DATABASE_URL"))
-        self.cache = {}
         self.bot_cogs = ["developer", "invite", "setting", "manage", "cache"]
+
+        with open("./static_data.json") as f:  # 固定データを読み込み
+            self.static_data = json.load(f)
+        self.db = await asyncpg.connect(os.getenv("DATABASE_URL"))  # データベースに接続
+        self.cache = {}  # 招待キャッシュ
+
         for cog in self.bot_cogs:
             self.load_extension(cog)  # Cogの読み込み
-        self.uptime = time.time()  # 起動時刻を取得
 
     async def on_ready(self):
         print(f"Logged in to [{self.user}]")
