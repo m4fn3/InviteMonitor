@@ -8,6 +8,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 from help import Help
+from SQLManager import SQLManager
 
 # 環境変数の読み込み
 load_dotenv(verbose=True)
@@ -30,7 +31,9 @@ class InviteMonitor(commands.Bot):
 
         with open("./static_data.json") as f:  # 固定データを読み込み
             self.static_data = json.load(f)
-        self.db = await asyncpg.connect(os.getenv("DATABASE_URL"))  # データベースに接続
+
+        # データベース接続準備
+        self.db = SQLManager(os.getenv("DATABASE_URL"))
         self.cache = {}  # 招待キャッシュ
 
         for cog in self.bot_cogs:
@@ -38,12 +41,15 @@ class InviteMonitor(commands.Bot):
 
     async def on_ready(self):
         print(f"Logged in to [{self.user}]")
-        # データベース内に登録されていないサーバーの、サーバー情報をデータベースに追加
-        for guild in self.guilds:
-            if guild.id not in self.db:  # TODO: db対応が必要
-                self.register_server(guild.id)
+        if not self.db.is_connected():  # データベースに接続しているか確認
+            await self.db.connect()  # データベースに接続
+        # NOTE: データベースからのサーバー取得時に確認するようにすれば不要?ダウンタイム時にサーバー退出などを考えても、データはそのままにしておいてもよいかもしれない
+        # # データベース内に登録されていないサーバーの、サーバー情報をデータベースに追加
+        # for guild in self.guilds:
+        #     if guild.id not in self.db:  # TODO: db対応が必要
+        #         self.register_server(guild.id)
         # 全てのサーバーの招待情報のキャッシュを更新 # NOTE: ダウンタイムにサーバーを退出したと考えると、データベース上のサーバーリストとの照会も必要かもしれない
-        for guild in self.guilds:
+        for guild in self.guilds:  # TODO: ログを登録していないサーバーのキャッシュは更新する必要がないのでdbから登録されているサーバーリストを取得して初期化
             if self.db[str(guild.id)]["channel"] is not None:  # TODO: データベースにあるかどうかの判定をデータベースに対応
                 await self.update_server_cache(guild)
         # 起動後のBOTステータスを設定
