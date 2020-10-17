@@ -26,18 +26,20 @@ class Invite(commands.Cog):
 
     async def catch_user(self, user_id: int):
         """ユーザーデータを取得する(できる限りキャッシュから取得,存在しないユーザーを考慮する)"""
-        if (user := self.bot.get_user(user_id)) is None:
+        if (user := self.bot.get_user(user_id)) is None:  # キャッシュから取得
             try:
-                user = await self.bot.fetch_user(user_id)
+                user = await self.bot.fetch_user(user_id)   # APIから取得
             except:
-                user = "Unknown"
+                user = "Unknown"  # 見つからない場合 'Unknown'
         return user
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
-        if (target_channel := self.bot.db[str(invite.guild.id)]["channel"]) is not None:
+        if (target_channel := self.bot.db[str(invite.guild.id)]["channel"]) is not None:  # TODO: dbから取得
             if self.bot.check_permission(invite.guild.me):
+                # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
+                # ログを送信
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_add']} Invite Created", color=0x00ff7f)
                 embed.description = f"Invite [{invite.code}]({invite.url}) has been created by <@{invite.inviter.id}>"
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
@@ -47,57 +49,61 @@ class Invite(commands.Cog):
 
     @commands.Cog.listener()
     async def on_invite_delete(self, invite):
-        if (target_channel := self.bot.db[str(invite.guild.id)]["channel"]) is not None:
+        if (target_channel := self.bot.db[str(invite.guild.id)]["channel"]) is not None:  # TODO: dbから取得
             if self.bot.check_permission(invite.guild.me):
                 inviter = None
-                # キャッシュに存在しない場合を考慮して,場合分けする
-                if invite.code in self.bot.cache[str(invite.guild.id)]:
+                if invite.code in self.bot.cache[str(invite.guild.id)]:  # 招待キャッシュから、招待作成者を取得
                     inviter = self.bot.cache[str(invite.guild.id)][invite.code]['author']
+                # 招待キャッシュを更新 ※ 順番に注意
                 await self.bot.update_server_cache(invite.guild)
+                # ログを送信
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['invite_del']} Invite Deleted", color=0xff8c00)
                 embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@' + str(inviter) + '>' if inviter else 'Unknown'} has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
-                user = await self.catch_user(inviter)
+                user = await self.catch_user(inviter)  # 招待者を取得
                 embed.add_field(name="Inviter", value=f"{user}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
-                # InviteRoleに登録されたコードが削除されていないかどうか確認する
+                # Triggerに登録されたコードが削除されていないかどうか確認する
                 if invite.code in self.bot.db[str(invite.guild.id)]["roles"]["code"]:
+                    # 通知文を送信
                     await self.bot.get_channel(target_channel).send(f":warning: Invite `{invite.code}` was deleted, so this trigger is no longer available!")
                     del self.bot.db[str(invite.guild.id)]["roles"]["code"][invite.code]  # 削除する
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        if (target_channel := self.bot.db[str(member.guild.id)]["channel"]) is not None:
+        if (target_channel := self.bot.db[str(member.guild.id)]["channel"]) is not None:  # TODO: dbから取得
             if self.bot.check_permission(member.guild.me):
-                old_invite_cache = self.bot.cache[str(member.guild.id)]
-                new_invite_cache = await self.bot.update_server_cache(member.guild)
-                res = await self.check_invite_diff(old_invite_cache, new_invite_cache)
+                old_invite_cache = self.bot.cache[str(member.guild.id)]  # 前の招待キャッシュを取得
+                new_invite_cache = await self.bot.update_server_cache(member.guild)  # 後の招待キャッシュを取得
+                res = await self.check_invite_diff(old_invite_cache, new_invite_cache)  # 差異から招待者を特定
+                # ログを送信
                 embed = discord.Embed(title=f"{self.bot.datas['emojis']['member_join']} Member Joined", color=0x00ffff)
                 embed.set_thumbnail(url=member.avatar_url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
-                    if str(res[0]) not in self.bot.db[str(member.guild.id)]["users"]:
-                        self.bot.db[str(member.guild.id)]["users"][str(res[0])] = {
+                    if str(res[0]) not in self.bot.db[str(member.guild.id)]["users"]:  # 未登録の場合、新規作成
+                        self.bot.db[str(member.guild.id)]["users"][str(res[0])] = {  # TODO: db対応
                             "to_all": {member.id},
                             "to": {member.id},
                             "from": None,
                             "code": None
                         }
-                    else:
+                    else:  # 既にデータがある場合、追加
                         self.bot.db[str(member.guild.id)]["users"][str(res[0])]["to"].add(member.id)
                         self.bot.db[str(member.guild.id)]["users"][str(res[0])]["to_all"].add(member.id)
                     # 招待された人の招待作成者を記録
-                    if str(member.id) not in self.bot.db[str(member.guild.id)]["users"]:
-                        self.bot.db[str(member.guild.id)]["users"][str(member.id)] = {
+                    if str(member.id) not in self.bot.db[str(member.guild.id)]["users"]:  # 未登録の場合、新規作成
+                        self.bot.db[str(member.guild.id)]["users"][str(member.id)] = { # TODO: db対応
                             "to_all": set(),
                             "to": set(),
                             "from": res[0],
                             "code": res[1]
                         }
-                    else:
+                    else:  # 既にデータがある場合、追加
                         self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] = res[0]
                         self.bot.db[str(member.guild.id)]["users"][str(member.id)]["code"] = res[1]
-                    inviter = await self.catch_user(res[0])
+                    inviter = await self.catch_user(res[0])  # 招待者を取得
+                    # ログを送信
                     embed.description = f"<@{member.id}> has joined through [{res[1]}](https://discord.gg/{res[1]}) made by <@{inviter.id}>"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"{res[1]} | {inviter}")
@@ -105,43 +111,46 @@ class Invite(commands.Cog):
                     embed.description = f"<@{member.id}> has joined"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"Unknown")
-                now = datetime.datetime.now(datetime.timezone.utc)
-                embed.timestamp = now
-                delta = now - pytz.timezone('UTC').localize(member.created_at)
-                if delta.days == 0:
+                # 参加者のアカウント作成日時を経過した時間で表示
+                now = datetime.datetime.now(datetime.timezone.utc)  # JST -> UTC
+                embed.timestamp = now  # 現在時刻をembedに追加
+                delta = now - pytz.timezone('UTC').localize(member.created_at)  # native -> aware(UTC)
+                if delta.days == 0:  # 一日以内場合
                     delta = f"__**{delta.seconds // 3600}hours {(delta.seconds % 3600) // 60}minutes**__"
-                elif delta.days <= 7:
+                elif delta.days <= 7:  # 一週間以内の場合
                     delta = f"**{delta.days}days {delta.seconds // 3600}hours**"
-                else:
+                else:  # それ以上の場合
                     delta = f"{delta.days // 30}months {delta.seconds % 30}days"
+                # ログを送信
                 embed.add_field(name="Account Created", value=f"{delta} ago", inline=False)
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
                 await self.bot.get_channel(target_channel).send(embed=embed)
+                # UserTriggerを確認
                 if member.guild.me.guild_permissions.manage_roles:  # ロール管理権限がある場合
-                    if res[0] in self.bot.db[str(member.guild.id)]["roles"]["user"]:  # 招待者が設定されている場合
-                        roles = self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]
+                    if res[0] in self.bot.db[str(member.guild.id)]["roles"]["user"]:  # 招待者が設定されている場合  # TODO: db対応
+                        roles = self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]  # TODO: db対応
                         target_role = []
                         for role_id in roles:
                             if (role := member.guild.get_role(role_id)) is not None:
-                                target_role.append(role)
+                                target_role.append(role)  # 役職を取得できた場合、追加
                         error_msg = ""
                         if not target_role:  # 役職を取得できない場合
                             await self.bot.get_channel(target_channel).send(f":warning: Roles were not found, so code trigger **{res[0]}** is no longer available!")
-                            del self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]  # 削除する
+                            del self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]  # 削除する # TODO: db対応
                         else:
                             try:
-                                await member.add_roles(*target_role)  # リストのロールオブジェクトをそれぞれ指定
-                            except:
+                                await member.add_roles(*target_role)  # リスト内のロールオブジェクトをそれぞれ指定
+                            except:  # 役職の付与に失敗した場合
                                 error_msg += f":x: Failed to add role `{','.join([role.name for role in target_role])}` of user trigger **{res[0]}**\nPlease check position of role! These may be higher role than I have.\n"
-                        if error_msg != "":
+                        if error_msg != "":  # エラーが発生した場合
                             await self.bot.get_channel(target_channel).send(error_msg)
 
-                    elif res[1] in self.bot.db[str(member.guild.id)]["roles"]["code"]:
-                        roles = self.bot.db[str(member.guild.id)]["roles"]["code"][res[1]]
+                    elif res[1] in self.bot.db[str(member.guild.id)]["roles"]["code"]:  # TODO: db対応
+                        roles = self.bot.db[str(member.guild.id)]["roles"]["code"][res[1]]  # TODO: db対応
                         target_role = []
                         for role_id in roles:
                             if (role := member.guild.get_role(role_id)) is not None:
-                                target_role.append(role)
+                                target_role.append(role)  # 役職を取得できた場合、追加
                         error_msg = ""
                         if not target_role:  # 役職を取得できない場合
                             await self.bot.get_channel(target_channel).send(f":warning: Roles were not found, so user trigger **{res[1]}** is no longer available!")
@@ -149,9 +158,9 @@ class Invite(commands.Cog):
                         else:
                             try:
                                 await member.add_roles(*target_role)  # リストのロールオブジェクトをそれぞれ指定
-                            except:
+                            except:  # 役職の付与に失敗した場合
                                 error_msg += f":x: Failed to add role `{','.join([role.name for role in target_role])}` of code trigger **{res[1]}**\nPlease check position of role! These may be higher role than I have.\n"
-                        if error_msg != "":
+                        if error_msg != "":  # エラーが発生した場合
                             await self.bot.get_channel(target_channel).send(error_msg)
 
     @commands.Cog.listener()
