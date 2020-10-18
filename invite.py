@@ -70,10 +70,10 @@ class Invite(commands.Cog):
                 embed.add_field(name="Inviter", value=f"{user}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 # Triggerに登録されたコードが削除されていないかどうか確認する
-                if invite.code in await self.bot.db.get_trigger_code_list():
+                if invite.code in await self.bot.db.get_code_trigger_list():
                     # 通知文を送信
                     await self.bot.get_channel(target_channel).send(f":warning: Invite `{invite.code}` was deleted, so this trigger is no longer available!")
-                    await self.bot.db.remove_trigger_code(invite.guild.id, invite.code)  # 削除する
+                    await self.bot.db.remove_code_trigger(invite.guild.id, invite.code)  # 削除する
             else:  # 権限不足エラー
                 pass  # TODO: manage_guild不足通知
 
@@ -90,27 +90,9 @@ class Invite(commands.Cog):
                 embed.set_thumbnail(url=member.avatar_url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
-                    if str(res[0]) not in self.bot.db[str(member.guild.id)]["users"]:  # 未登録の場合、新規作成
-                        self.bot.db[str(member.guild.id)]["users"][str(res[0])] = {  # TODO: db対応
-                            "to_all": {member.id},
-                            "to": {member.id},
-                            "from": None,
-                            "code": None
-                        }
-                    else:  # 既にデータがある場合、追加
-                        self.bot.db[str(member.guild.id)]["users"][str(res[0])]["to"].add(member.id)
-                        self.bot.db[str(member.guild.id)]["users"][str(res[0])]["to_all"].add(member.id)
+                    self.bot.db.add_invited_to_inviter(member.guild.id, res[0], member.id)
                     # 招待された人の招待作成者を記録
-                    if str(member.id) not in self.bot.db[str(member.guild.id)]["users"]:  # 未登録の場合、新規作成
-                        self.bot.db[str(member.guild.id)]["users"][str(member.id)] = {  # TODO: db対応
-                            "to_all": set(),
-                            "to": set(),
-                            "from": res[0],
-                            "code": res[1]
-                        }
-                    else:  # 既にデータがある場合、追加
-                        self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] = res[0]
-                        self.bot.db[str(member.guild.id)]["users"][str(member.id)]["code"] = res[1]
+                    self.bot.db.add_inviter_to_invited(member.guild.id, res[0], member.id)
                     inviter = await self.catch_user(res[0])  # 招待者を取得
                     # ログを送信
                     embed.description = f"<@{member.id}> has joined through [{res[1]}](https://discord.gg/{res[1]}) made by <@{inviter.id}>"
@@ -136,8 +118,8 @@ class Invite(commands.Cog):
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 # UserTriggerを確認
                 if member.guild.me.guild_permissions.manage_roles:  # ロール管理権限がある場合
-                    if res[0] in self.bot.db[str(member.guild.id)]["roles"]["user"]:  # 招待者が設定されている場合  # TODO: db対応
-                        roles = self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]  # TODO: db対応
+                    if res[0] in await self.bot.db.get_user_trigger_list():  # 招待者が設定されている場合
+                        roles = self.bot.db.get_user_trigger_roles(member.guild.id, res[0])
                         target_role = []
                         for role_id in roles:
                             if (role := member.guild.get_role(role_id)) is not None:
@@ -145,7 +127,7 @@ class Invite(commands.Cog):
                         error_msg = ""
                         if not target_role:  # 役職を取得できない場合
                             await self.bot.get_channel(target_channel).send(f":warning: Roles were not found, so code trigger **{res[0]}** is no longer available!")
-                            del self.bot.db[str(member.guild.id)]["roles"]["user"][res[0]]  # 削除する # TODO: db対応
+                            self.bot.db.remove_user_trigger(member.guild.id, res[0])
                         else:
                             try:
                                 await member.add_roles(*target_role)  # リスト内のロールオブジェクトをそれぞれ指定
@@ -154,8 +136,8 @@ class Invite(commands.Cog):
                         if error_msg != "":  # エラーが発生した場合
                             await self.bot.get_channel(target_channel).send(error_msg)
 
-                    elif res[1] in self.bot.db[str(member.guild.id)]["roles"]["code"]:  # TODO: db対応
-                        roles = self.bot.db[str(member.guild.id)]["roles"]["code"][res[1]]  # TODO: db対応
+                    elif res[1] in await self.bot.db.get_code_trigger_roles(member.guild.id, res[1]):
+                        roles = await self.bot.db.get_code_trigger_roles(member.guild.id, res[1])
                         target_role = []
                         for role_id in roles:
                             if (role := member.guild.get_role(role_id)) is not None:
