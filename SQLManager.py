@@ -36,6 +36,8 @@ class SQLManager:
         res = await self.con.fetchrow("select array_agg(id) from server where channel is not null;")
         return dict(res)["array_agg"]
 
+    # サーバーキーエラーが出た場合新規追加
+
 
 
 

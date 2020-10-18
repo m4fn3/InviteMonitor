@@ -40,52 +40,38 @@ class InviteMonitor(commands.Bot):
             self.load_extension(cog)  # Cogの読み込み
 
     async def on_ready(self):
+        """キャッシュの準備ができた際のイベント"""
         print(f"Logged in to [{self.user}]")
         if not self.db.is_connected():  # データベースに接続しているか確認
             await self.db.connect()  # データベースに接続
-        # NOTE: データベースからのサーバー取得時に確認するようにすれば不要?ダウンタイム時にサーバー退出などを考えても、データはそのままにしておいてもよいかもしれない
-        # # データベース内に登録されていないサーバーの、サーバー情報をデータベースに追加
-        # for guild in self.guilds:
-        #     if guild.id not in self.db:  # TODO: db対応が必要
-        #         self.register_server(guild.id)
-        # 全てのサーバーの招待情報のキャッシュを更新 # NOTE: ダウンタイムにサーバーを退出したと考えると、データベース上のサーバーリストとの照会も必要かもしれない
-        for guild in self.guilds:  # TODO: ログを登録していないサーバーのキャッシュは更新する必要がないのでdbから登録されているサーバーリストを取得して初期化
-            if self.db[str(guild.id)]["channel"] is not None:  # TODO: データベースにあるかどうかの判定をデータベースに対応
-                await self.update_server_cache(guild)
+        # 全てのサーバーの招待情報のキャッシュを更新
+        for guild in await self.db.get_enabled_guild_ids():  # 有効化されているサーバーを取得
+            await self.update_server_cache(guild)
         # 起動後のBOTステータスを設定
         await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
-    async def on_guild_join(self, guild):
-        # サーバー情報をデータベースに追加
-        self.register_server(guild.id)
+    async def on_guild_join(self, guild: discord.guild):
+        """BOT自身がサーバーに参加した際のイベント"""
+        # サーバー情報をデータベースに新規登録
+        await self.db.register_new_guild(guild.id)
 
     async def on_guild_remove(self, guild):
-        # サーバー情報&招待キャッシュを削除
-        del self.db[str(guild.id)]  # TODO: DB対応
+        """BOT自身がサーバーを退出した際のイベント"""
+        # 招待キャッシュを削除
         if guild.id in self.cache:
             del self.cache[guild.id]
 
     async def on_message(self, message):
+        """メッセージを受け取った際のイベント"""
         if message.content == f"<@!{self.user.id}>":  # メンションされた場合、簡単な説明分を送信
             return await message.channel.send(f"My prefix is **{self.PREFIX}**\nSee list of commands by `{self.PREFIX}help`")
         else:  # コマンドを処理
             await self.process_commands(message)
 
-    def register_server(self, guild_id):
-        # TODO: DBに対応 - データベースにサーバー情報を追加
-        self.db[str(guild_id)] = {
-            "channel": None,
-            "users": {},
-            "roles": {
-                "code": {},
-                "user": {}
-            }
-        }
-
-    async def update_server_cache(self, guild):
-        # サーバーの招待キャッシュを更新
+    async def update_server_cache(self, guild: discord.guild):
+        """サーバーの招待キャッシュを更新"""
         invites = {invite.code: {"uses": invite.uses, "author": invite.inviter.id} for invite in await guild.invites()}
-        self.cache[str(guild.id)] = invites
+        self.cache[guild.id] = invites
         return invites
 
     def check_permission(self, member):
