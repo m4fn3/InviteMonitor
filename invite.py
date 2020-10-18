@@ -1,8 +1,9 @@
 import asyncio
 import datetime
+import re
+
 import discord
 import pytz
-import re
 from discord.ext import commands
 
 from main import InviteMonitor
@@ -15,6 +16,7 @@ class Invite(commands.Cog):
         self.bot = bot  # type: InviteMonitor
 
     async def cog_command_error(self, ctx, error):
+        """コマンド処理でエラーが発生した際の処理"""
         if isinstance(error, commands.CommandOnCooldown):  # クールダウン
             await ctx.send(f":hourglass_flowing_sand: Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
         elif isinstance(error, commands.MissingRequiredArgument):  # 引数不足
@@ -25,18 +27,19 @@ class Invite(commands.Cog):
             await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
     async def catch_user(self, user_id: int):
-        """ユーザーデータを取得する(できる限りキャッシュから取得,存在しないユーザーを考慮する)"""
+        """効率よくユーザーデータを取得する"""
         if (user := self.bot.get_user(user_id)) is None:  # キャッシュから取得
             try:
-                user = await self.bot.fetch_user(user_id)   # APIから取得
+                user = await self.bot.fetch_user(user_id)  # APIから取得
             except:
                 user = "Unknown"  # 見つからない場合 'Unknown'
         return user
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
-        if (target_channel := self.bot.db[str(invite.guild.id)]["channel"]) is not None:  # TODO: dbから取得
-            if self.bot.check_permission(invite.guild.me):
+        """招待が作成された際のイベント"""
+        if target_channel := self.bot.db.get_log_channel_id():  # サーバーで有効化されている場合
+            if invite.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
@@ -46,6 +49,8 @@ class Invite(commands.Cog):
                 embed.add_field(name="MaxUses / MaxAge", value=f"{self.parse_max_uses(invite.max_uses)} times | {self.parse_max_age(invite.max_age)}")
                 embed.add_field(name="Inviter", value=f"{invite.inviter}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
+            else:  # 権限不足エラー
+                pass  # TODO: manage_guild不足通知
 
     @commands.Cog.listener()
     async def on_invite_delete(self, invite):
@@ -93,7 +98,7 @@ class Invite(commands.Cog):
                         self.bot.db[str(member.guild.id)]["users"][str(res[0])]["to_all"].add(member.id)
                     # 招待された人の招待作成者を記録
                     if str(member.id) not in self.bot.db[str(member.guild.id)]["users"]:  # 未登録の場合、新規作成
-                        self.bot.db[str(member.guild.id)]["users"][str(member.id)] = { # TODO: db対応
+                        self.bot.db[str(member.guild.id)]["users"][str(member.id)] = {  # TODO: db対応
                             "to_all": set(),
                             "to": set(),
                             "from": res[0],

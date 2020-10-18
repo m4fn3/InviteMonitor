@@ -36,6 +36,13 @@ class SQLManager:
         res = await self.con.fetchrow("select array_agg(id) from server where channel is not null;")
         return dict(res)["array_agg"]
 
+    async def get_log_channel_id(self, guild_id: int) -> int:
+        res = await self.con.fetchrow("select channel from server where id = $1", guild_id)
+        if res is None or res["channel"] is None:
+            return None
+        else:
+            return res["channel"]
+
     # TODO: サーバーキーエラーが出た場合新規追加
 
 

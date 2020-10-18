@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 from SQLManager import SQLManager
 from help import Help
+from static_data import StaticData
 
 # 環境変数の読み込み
 load_dotenv(verbose=True)
@@ -29,8 +30,7 @@ class InviteMonitor(commands.Bot):
         self.PREFIX = PREFIX
         self.bot_cogs = ["developer", "invite", "setting", "manage", "cache"]
 
-        with open("./static_data.json") as f:  # 固定データを読み込み
-            self.static_data = json.load(f)
+        self.static_data = StaticData()
 
         # データベース接続準備
         self.db = SQLManager(os.getenv("DATABASE_URL"))
@@ -45,8 +45,8 @@ class InviteMonitor(commands.Bot):
         if not self.db.is_connected():  # データベースに接続しているか確認
             await self.db.connect()  # データベースに接続
         # 全てのサーバーの招待情報のキャッシュを更新
-        for guild in await self.db.get_enabled_guild_ids():  # 有効化されているサーバーを取得
-            await self.update_server_cache(guild)
+        for guild_id in await self.db.get_enabled_guild_ids():  # 有効化されているサーバーを取得
+            await self.update_server_cache(self.get_guild(guild_id))
         # 起動後のBOTステータスを設定
         await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
