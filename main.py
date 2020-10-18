@@ -74,13 +74,6 @@ class InviteMonitor(commands.Bot):
         self.cache[guild.id] = invites
         return invites
 
-    def check_permission(self, member):
-        # TODO: 別のクラスとして用意するか、それぞれの部分で逐一書く
-        if member.guild_permissions.manage_guild:
-            return 1
-        else:
-            return 0
-
 
 if __name__ == '__main__':
     bot_intents = discord.Intents.all()  # 全てのインテントを有効化
