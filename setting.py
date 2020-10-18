@@ -60,7 +60,7 @@ class Setting(commands.Cog):
             embed.add_field(name="Log Channel", value=f"<#{self.bot.db[str(ctx.guild.id)]['channel']}>")
             embed.add_field(name="Member Count", value=f"{len(ctx.guild.members)}")
             embed.add_field(name="Known Members", value=f"{len(self.bot.db[str(ctx.guild.id)]['users'])}")
-            embed.add_field(name="Invites Count", value=f"{len(self.bot.cache[str(ctx.guild.id)])}")
+            embed.add_field(name="Invites Count", value=f"{len(self.bot.cache[ctx.guild.id])}")
             await ctx.send(embed=embed)
         else:
             target_user = ctx.message.mentions[0]

@@ -102,11 +102,11 @@ class Manage(commands.Cog):
         # 招待コードが有効であることを確認する,有効あらばリンクの作成者を対象者に追加
         target_invites = set()
         for invite in invites:
-            if invite not in self.bot.cache[str(ctx.guild.id)]:
+            if invite not in self.bot.cache[ctx.guild.id]:
                 error_msg += f":x: `{invite}` is invalid invite code.\n"
             else:
                 target_invites.add(invite)
-                target_users.add(self.bot.cache[str(ctx.guild.id)][invite]["author"])
+                target_users.add(self.bot.cache[ctx.guild.id][invite]["author"])
         # 指定されたユーザーに招待された人のIDのリストを作成
         for user in self.bot.db[str(ctx.guild.id)]["users"]:
             # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
@@ -157,11 +157,11 @@ class Manage(commands.Cog):
         # 招待コードが有効であることを確認する,有効あらばリンクの作成者を対象者に追加
         target_invites = set()
         for invite in invites:
-            if invite not in self.bot.cache[str(ctx.guild.id)]:
+            if invite not in self.bot.cache[ctx.guild.id]:
                 error_msg += f":x: `{invite}` is invalid invite code.\n"
             else:
                 target_invites.add(invite)
-                target_users.add(self.bot.cache[str(ctx.guild.id)][invite]["author"])
+                target_users.add(self.bot.cache[ctx.guild.id][invite]["author"])
         # 指定されたユーザーに招待された人のIDのリストを作成
         for user in self.bot.db[str(ctx.guild.id)]["users"]:
             # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合

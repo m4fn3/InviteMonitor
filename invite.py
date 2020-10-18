@@ -53,13 +53,14 @@ class Invite(commands.Cog):
                 pass  # TODO: manage_guild不足通知
 
     @commands.Cog.listener()
-    async def on_invite_delete(self, invite):
-        if (target_channel := self.bot.db[str(invite.guild.id)]["channel"]) is not None:  # TODO: dbから取得
-            if self.bot.check_permission(invite.guild.me):
+    async def on_invite_delete(self, invite: discord.Invite):
+        """招待が削除された際のイベント"""
+        if target_channel := self.bot.db.get_log_channel_id():  # サーバーで有効化されている場合
+            if invite.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 inviter = None
-                if invite.code in self.bot.cache[str(invite.guild.id)]:  # 招待キャッシュから、招待作成者を取得
-                    inviter = self.bot.cache[str(invite.guild.id)][invite.code]['author']
-                # 招待キャッシュを更新 ※ 順番に注意
+                if invite.code in self.bot.cache[invite.guild.id]:  # 招待キャッシュから、招待作成者を取得
+                    inviter = self.bot.cache[invite.guild.id][invite.code]['author']
+                # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
                 embed = discord.Embed(title=f"{self.bot.static_data.emoji_invite_del} Invite Deleted", color=0xff8c00)
@@ -69,16 +70,19 @@ class Invite(commands.Cog):
                 embed.add_field(name="Inviter", value=f"{user}")
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 # Triggerに登録されたコードが削除されていないかどうか確認する
-                if invite.code in self.bot.db[str(invite.guild.id)]["roles"]["code"]:
+                if invite.code in await self.bot.db.get_trigger_code_list():
                     # 通知文を送信
                     await self.bot.get_channel(target_channel).send(f":warning: Invite `{invite.code}` was deleted, so this trigger is no longer available!")
-                    del self.bot.db[str(invite.guild.id)]["roles"]["code"][invite.code]  # 削除する
+                    await self.bot.db.remove_trigger_code(invite.guild.id, invite.code)  # 削除する
+            else:  # 権限不足エラー
+                pass  # TODO: manage_guild不足通知
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        if (target_channel := self.bot.db[str(member.guild.id)]["channel"]) is not None:  # TODO: dbから取得
-            if self.bot.check_permission(member.guild.me):
-                old_invite_cache = self.bot.cache[str(member.guild.id)]  # 前の招待キャッシュを取得
+        """メンバーが参加した際のイベント"""
+        if target_channel := self.bot.db.get_log_channel_id():  # サーバーで有効化されている場合
+            if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
+                old_invite_cache = self.bot.cache[member.guild.id]  # 前の招待キャッシュを取得
                 new_invite_cache = await self.bot.update_server_cache(member.guild)  # 後の招待キャッシュを取得
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)  # 差異から招待者を特定
                 # ログを送信
@@ -167,13 +171,16 @@ class Invite(commands.Cog):
                                 error_msg += f":x: Failed to add role `{','.join([role.name for role in target_role])}` of code trigger **{res[1]}**\nPlease check position of role! These may be higher role than I have.\n"
                         if error_msg != "":  # エラーが発生した場合
                             await self.bot.get_channel(target_channel).send(error_msg)
+            else:  # 権限不足エラー
+                pass  # TODO: manage_guild不足通知
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
+        """メンバーが退出した際のイベント"""
         if member.id == self.bot.user.id:  # BOT自身がサーバーを退出した際の呼び出しを防ぐ
             return
-        if (target_channel := self.bot.db[str(member.guild.id)]["channel"]) is not None:  # TODO: db対応
-            if self.bot.check_permission(member.guild.me):
+        if target_channel := self.bot.db.get_log_channel_id():  # サーバーで有効化されている場合
+            if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 # ログを送信
                 embed = discord.Embed(title=f"{self.bot.static_data.emoji.member_leave} Member Left", color=0xff1493)
                 embed.set_thumbnail(url=member.avatar_url)
@@ -273,7 +280,7 @@ class Invite(commands.Cog):
             return await ctx.send(":x: You already have 5 triggers! Please delete trigger before make new one.")
         # 招待コードを取得
         target_code = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", "", code)
-        if target_code not in self.bot.cache[str(ctx.guild.id)]:
+        if target_code not in self.bot.cache[ctx.guild.id]:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Invalid code was specified.")
         target_role = self.get_roles_from_string(role, ctx.guild)
