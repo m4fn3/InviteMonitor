@@ -1,14 +1,14 @@
-import asyncpg
-import discord
+import json
 import logging
 import os
 import time
-import json
-from discord.ext import commands, tasks
+
+import discord
+from discord.ext import commands
 from dotenv import load_dotenv
 
-from help import Help
 from SQLManager import SQLManager
+from help import Help
 
 # 環境変数の読み込み
 load_dotenv(verbose=True)
