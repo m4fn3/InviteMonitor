@@ -14,7 +14,7 @@ class Help(commands.HelpCommand):
         page = 1
         cogs = ["Setting", "Invite", "Manage", "Cache"]
         embed_org = discord.Embed(title=f"{self.context.bot.user.name} Usage", color=0x00ff00)
-        embed_org.description = f"`{self.context.bot.PREFIX}help (command name)` to see detailed description of the command!" + self.description_text.format(self.context.bot.static_data['server'])
+        embed_org.description = f"`{self.context.bot.PREFIX}help (command name)` to see detailed description of the command!" + self.description_text.format(self.context.bot.static_data.server)
         for cog_name in cogs:
             cog = discord.utils.get(mapping, qualified_name=cog_name)
             command_list = [command.name for command in await self.filter_commands(cog.get_commands())]
@@ -42,7 +42,7 @@ class Help(commands.HelpCommand):
                         page -= 1
                 elif str(reaction.emoji) == "❔":
                     embed = discord.Embed(title="How to read the help", color=0x00ff00)
-                    embed.description = f"You can move the page by pressing the reaction below the message" + self.description_text.format(self.context.bot.static_data['server'])
+                    embed.description = f"You can move the page by pressing the reaction below the message" + self.description_text.format(self.context.bot.static_data.server)
                     embed.add_field(name="[argument]", value="__**required**__ argument", inline=False)
                     embed.add_field(name="(argument)", value="__**option**__", inline=False)
                     embed.add_field(name="[A|B]", value="either A or B", inline=False)
@@ -54,7 +54,7 @@ class Help(commands.HelpCommand):
                 cog = discord.utils.get(mapping, qualified_name=cogs[page - 2])
                 cmds = cog.get_commands()
                 embed = discord.Embed(title=cog.qualified_name, color=0x00ff00)
-                embed.description = cog.description + self.description_text.format(self.context.bot.static_data['server'])
+                embed.description = cog.description + self.description_text.format(self.context.bot.static_data.server)
                 for cmd in await self.filter_commands(cmds):
                     description = cmd.brief if cmd.brief is not None else cmd.description
                     embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"```{description}```", inline=False)

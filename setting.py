@@ -104,8 +104,8 @@ class Setting(commands.Cog):
         h, m = divmod(m, 60)
         d = td.days
         embed.add_field(name="Uptime", value=f"{d}d {h}h {m}m {s}s", inline=False)
-        embed.add_field(name="URL 📎", value=f"[InviteBOT]({self.bot.static_data['invite']}) | [OfficialServer]({self.bot.static_data['server']})", inline=False)
-        embed.set_footer(text=f"{self.bot.user.name} is powered by {self.bot.get_user(self.bot.static_data['author'])} with discord.py", icon_url="http://zorba.starfree.jp/mafu.jpg")
+        embed.add_field(name="URL 📎", value=f"[InviteBOT]({self.bot.static_data.invite}) | [OfficialServer]({self.bot.static_data.server})", inline=False)
+        embed.set_footer(text=f"{self.bot.user.name} is powered by {self.bot.get_user(self.bot.static_data.author)} with discord.py", icon_url="http://zorba.starfree.jp/mafu.jpg")
         await ctx.send(embed=embed)
 
 

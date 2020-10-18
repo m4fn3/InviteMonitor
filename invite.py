@@ -43,7 +43,7 @@ class Invite(commands.Cog):
                 # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data['emojis']['invite_add']} Invite Created", color=0x00ff7f)
+                embed = discord.Embed(title=f"{self.bot.static_data.emoji.invite_add} Invite Created", color=0x00ff7f)
                 embed.description = f"Invite [{invite.code}]({invite.url}) has been created by <@{invite.inviter.id}>"
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
                 embed.add_field(name="MaxUses / MaxAge", value=f"{self.parse_max_uses(invite.max_uses)} times | {self.parse_max_age(invite.max_age)}")
@@ -62,7 +62,7 @@ class Invite(commands.Cog):
                 # 招待キャッシュを更新 ※ 順番に注意
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data['emojis']['invite_del']} Invite Deleted", color=0xff8c00)
+                embed = discord.Embed(title=f"{self.bot.static_data.emoji_invite_del} Invite Deleted", color=0xff8c00)
                 embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@' + str(inviter) + '>' if inviter else 'Unknown'} has deleted or expired."
                 embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
                 user = await self.catch_user(inviter)  # 招待者を取得
@@ -82,7 +82,7 @@ class Invite(commands.Cog):
                 new_invite_cache = await self.bot.update_server_cache(member.guild)  # 後の招待キャッシュを取得
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)  # 差異から招待者を特定
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data['emojis']['member_join']} Member Joined", color=0x00ffff)
+                embed = discord.Embed(title=f"{self.bot.static_data.emoji.member_join} Member Joined", color=0x00ffff)
                 embed.set_thumbnail(url=member.avatar_url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
@@ -175,7 +175,7 @@ class Invite(commands.Cog):
         if (target_channel := self.bot.db[str(member.guild.id)]["channel"]) is not None:  # TODO: db対応
             if self.bot.check_permission(member.guild.me):
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data['emojis']['member_leave']} Member Left", color=0xff1493)
+                embed = discord.Embed(title=f"{self.bot.static_data.emoji.member_leave} Member Left", color=0xff1493)
                 embed.set_thumbnail(url=member.avatar_url)
                 # メンバーがデータベース上に存在しないか、招待元がNoneの場合 # TODO: db対応
                 if (str(member.id) not in self.bot.db[str(member.guild.id)]["users"]) or (self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] is None):
@@ -227,7 +227,7 @@ class Invite(commands.Cog):
     @commands.command(aliases=["inv"], usage="invite (@bot)", description="Show invite URL of this BOT. If bot mentioned, send invite url of mentioned bot")
     async def invite(self, ctx):
         if not ctx.message.mentions:  # メンションがない場合、このBOTの招待リンクを表示
-            await ctx.send(f"__**Add {self.bot.user.name}!**__\n{self.bot.static_data['invite']}\n__**Join Official Server!**__\n{self.bot.static_data['server']}")
+            await ctx.send(f"__**Add {self.bot.user.name}!**__\n{self.bot.static_data.invite}\n__**Join Official Server!**__\n{self.bot.static_data.server}")
         else:  # メンションがある場合、メンションされたBOTの招待リンクを表示
             invite_text = ""
             for target_user in ctx.message.mentions:
@@ -255,7 +255,7 @@ class Invite(commands.Cog):
             raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code triggers")
-            embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.static_data['emojis']['invite_add']} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.static_data['emojis']['invite_del']} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
+            embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
             count = 1
             for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys():
                 roles = self.bot.db[str(ctx.guild.id)]["roles"]["code"][trigger_name]
@@ -275,11 +275,11 @@ class Invite(commands.Cog):
         target_code = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", "", code)
         if target_code not in self.bot.cache[str(ctx.guild.id)]:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data['emojis']['no_mag']} Invalid code was specified.")
+            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Invalid code was specified.")
         target_role = self.get_roles_from_string(role, ctx.guild)
         if not target_role:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data['emojis']['no_mag']} Role not found. Please make sure that role exists.")
+            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
         if target_code in self.bot.db[str(ctx.guild.id)]["roles"]["code"]:  # 既に設定されている場合は確認する
@@ -295,7 +295,7 @@ class Invite(commands.Cog):
             except asyncio.TimeoutError:
                 return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
         self.bot.db[str(ctx.guild.id)]["roles"]["code"][target_code] = target_role
-        await ctx.send(f"{self.bot.static_data['emojis']['invite_add']} Code trigger has created successfully!")
+        await ctx.send(f"{self.bot.static_data.emoji.invite_add} Code trigger has created successfully!")
 
     @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -303,7 +303,7 @@ class Invite(commands.Cog):
         if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["code"]):
             key_list = list(self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys())
             del self.bot.db[str(ctx.guild.id)]["roles"]["code"][key_list[int(index) - 1]]
-            await ctx.send(f"{self.bot.static_data['emojis']['invite_del']} Code trigger **{index}** has deleted successfully!")
+            await ctx.send(f"{self.bot.static_data.emoji.invite_del} Code trigger **{index}** has deleted successfully!")
         else:
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {len(self.bot.db[str(ctx.guild.id)]['roles']['code'])}.")
 
@@ -320,7 +320,7 @@ class Invite(commands.Cog):
             raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers")
-            embed.description = f"If participant invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data['emojis']['invite_add']} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data['emojis']['invite_del']} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
+            embed.description = f"If participant invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
             count = 1
             for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys():
                 roles = self.bot.db[str(ctx.guild.id)]["roles"]["user"][trigger_name]
@@ -340,11 +340,11 @@ class Invite(commands.Cog):
         target_user = self.get_user_from_string(user, ctx.guild)
         if target_user is None:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data['emojis']['no_mag']} User not found. Please make sure that user exists.")
+            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} User not found. Please make sure that user exists.")
         target_role = self.get_roles_from_string(role, ctx.guild)
         if not target_role:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data['emojis']['no_mag']} Role not found. Please make sure that role exists.")
+            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
         if target_user in self.bot.db[str(ctx.guild.id)]["roles"]["user"]:  # 既に設定されている場合は確認する
@@ -360,7 +360,7 @@ class Invite(commands.Cog):
             except asyncio.TimeoutError:
                 return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
         self.bot.db[str(ctx.guild.id)]["roles"]["user"][target_user] = target_role
-        await ctx.send(f"{self.bot.static_data['emojis']['invite_add']} User trigger has created successfully!")
+        await ctx.send(f"{self.bot.static_data.emoji.invite_add} User trigger has created successfully!")
 
     @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -368,7 +368,7 @@ class Invite(commands.Cog):
         if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]):
             key_list = list(self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys())
             del self.bot.db[str(ctx.guild.id)]["roles"]["user"][key_list[int(index) - 1]]
-            await ctx.send(f"{self.bot.static_data['emojis']['invite_del']} User trigger **{index}** has deleted successfully!")
+            await ctx.send(f"{self.bot.static_data.emoji.invite_del} User trigger **{index}** has deleted successfully!")
         else:
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {len(self.bot.db[str(ctx.guild.id)]['roles']['user'])}.")
 
