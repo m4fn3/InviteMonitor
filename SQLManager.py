@@ -127,7 +127,7 @@ class SQLManager:
 
     async def register_new_user(self, guild_id: int, user_id: int) -> None:
         """新規ユーザーデータを追加"""
-        init_data = {user_id: {"to_all": [], "to": [], "from": None, "code": None}}
+        init_data = {user_id: {"to": [], "from": None, "code": None}}
         await self.con.execute("UPDATE server SET users = users||$1::jsonb WHERE id = $2", json.dumps(init_data), guild_id)
 
     async def get_user_invite_from(self, guild_id: int, user_id: int) -> int:

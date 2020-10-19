@@ -103,15 +103,7 @@ class Invite(commands.Cog):
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"Unknown")
                 # 参加者のアカウント作成日時を経過した時間で表示
-                now = datetime.datetime.now(datetime.timezone.utc)  # JST -> UTC
-                embed.timestamp = now  # 現在時刻をembedに追加
-                delta = now - pytz.timezone('UTC').localize(member.created_at)  # native -> aware(UTC)
-                if delta.days == 0:  # 一日以内場合
-                    delta = f"__**{delta.seconds // 3600}hours {(delta.seconds % 3600) // 60}minutes**__"
-                elif delta.days <= 7:  # 一週間以内の場合
-                    delta = f"**{delta.days}days {delta.seconds // 3600}hours**"
-                else:  # それ以上の場合
-                    delta = f"{delta.days // 30}months {delta.seconds % 30}days"
+                embed.timestamp, delta = self.get_delta_time(member.created_at, with_warn=True)
                 # ログを送信
                 embed.add_field(name="Account Created", value=f"{delta} ago", inline=False)
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
@@ -166,31 +158,21 @@ class Invite(commands.Cog):
                 # ログを送信
                 embed = discord.Embed(title=f"{self.bot.static_data.emoji.member_leave} Member Left", color=0xff1493)
                 embed.set_thumbnail(url=member.avatar_url)
-                # メンバーがデータベース上に存在しないか、招待元がNoneの場合 # TODO: db対応
-                if (str(member.id) not in self.bot.db[str(member.guild.id)]["users"]) or (self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"] is None):
+                # メンバーがデータベース上に存在しないか、招待元がNoneの場合
+                invite_from = await self.bot.db.get_user_invite_from(member.guild.id, member.id)
+                if await self.bot.db.is_registered_user(member.guild.id, member.id) or invite_from:
                     embed.description = f"<@{member.id}> has left"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"Unknown")
-                else:  # 招待者データがある場合 # TODO: db対応 L2
-                    inviter_id = self.bot.db[str(member.guild.id)]["users"][str(member.id)]["from"]
-                    invite_code = self.bot.db[str(member.guild.id)]["users"][str(member.id)]["code"]
-                    # 招待者がデータに登録されており、招待者の招待先にその人が登録されているなら、現在も入っているメンバーのリストから削除
-                    if str(inviter_id) in self.bot.db[str(member.guild.id)]["users"] and member.id in self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to"] and member.id in self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to_all"]:
-                        self.bot.db[str(member.guild.id)]["users"][str(inviter_id)]["to"].remove(member.id)  # TODO: db対応
+                else:  # 招待者データがある場合
+                    inviter_id = invite_from
+                    invite_code = await self.bot.db.get_user_invite_code(member.guild.id, member.id)
                     inviter = await self.catch_user(inviter_id)
                     embed.description = f"<@{member.id}> invited by <@{inviter.id}> has left"
                     embed.add_field(name="User", value=f"{member}")
                     embed.add_field(name="Invite", value=f"{invite_code} | {inviter}")
                 # 滞在した時間を何時間経過したかで表示
-                now = datetime.datetime.now(datetime.timezone.utc)
-                embed.timestamp = now
-                delta = now - pytz.timezone('UTC').localize(member.joined_at)
-                if delta.days == 0:  # 一日以内の場合
-                    delta = f"{delta.seconds // 3600}hours {(delta.seconds % 3600) // 60}minutes"
-                elif delta.days <= 7:  # 一週間以内の場合
-                    delta = f"{delta.days}days {delta.seconds // 3600}hours"
-                else:  # それ以上の場合
-                    delta = f"{delta.days // 30}months {delta.seconds % 30}days"
+                embed.timestamp, delta = self.get_delta_time(member.joined_at)
                 embed.add_field(name="Stayed Time", value=f"{delta}", inline=False)
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
                 await self.bot.get_channel(target_channel).send(embed=embed)
@@ -408,6 +390,22 @@ class Invite(commands.Cog):
             return "12 hours"
         elif max_age == 86400:
             return "1 day"
+
+    def get_delta_time(self, base_datetime, with_warn=False):
+        now = datetime.datetime.now(datetime.timezone.utc)  # JST -> UTC
+        delta = now - pytz.timezone('UTC').localize(base_datetime)  # native -> aware(UTC)
+        if delta.days == 0:  # 一日以内場合
+            delta = f"__**{delta.seconds // 3600}hours {(delta.seconds % 3600) // 60}minutes**__"
+            if with_warn:
+                delta = f"__**{delta}**__"
+        elif delta.days <= 7:  # 一週間以内の場合
+            delta = f"**{delta.days}days {delta.seconds // 3600}hours**"
+            if with_warn:
+                delta = f"**{delta}**"
+        else:  # それ以上の場合
+            delta = f"{delta.days // 30}months {delta.seconds % 30}days"
+        return [now, delta]
+
 
 
 def setup(bot):
