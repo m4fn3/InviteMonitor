@@ -67,6 +67,10 @@ class SQLManager:
         else:
             return res["array_agg"]
 
+    async def get_code_trigger_count(self, guild_id: int) -> int:
+        """招待コードトリガーの数を取得"""
+        pass  # TODO:  select count(keys) from ( select jsonb_object_keys(code_trigger) as keys from server where id =  766220825102778388 )r;
+
     async def get_code_trigger_roles(self, guild_id: int, code: str) -> list:
         """招待コードトリガーに設定されている役職のリストを取得"""
         res = await self.con.fetchrow("SELECT code_trigger->>$1 AS f FROM server WHERE id = $2;", code, guild_id)
@@ -95,6 +99,10 @@ class SQLManager:
             return []
         else:
             return res["array_agg"]
+
+    async def get_user_trigger_count(self, guild_id: int) -> int:
+        """ユーザートリガーの数を取得"""
+        pass  # TODO:  select count(keys) from ( select jsonb_object_keys(user_trigger) as keys from server where id =  766220825102778388 )r;
 
     async def get_user_trigger_roles(self, guild_id: int, user_id: int) -> list:
         """ユーザートリガーに設定されている役職のリストを取得"""

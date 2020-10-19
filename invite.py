@@ -228,8 +228,8 @@ class Invite(commands.Cog):
             embed = discord.Embed(title="Code triggers")
             embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
             count = 1
-            for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys():  # TODO: db対応2L
-                roles = self.bot.db[str(ctx.guild.id)]["roles"]["code"][trigger_name]
+            for trigger_name in self.bot.db.get_code_trigger_list(ctx.guild.id):
+                roles = self.bot.db.get_code_trigger_roles(ctx.guild.id, trigger_name)
                 embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
                 count += 1
             embed.set_footer(text=f"Total {count - 1} code triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
