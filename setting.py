@@ -71,8 +71,10 @@ class Setting(commands.Cog):
                 if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] is not None:
                     remain_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"])
                 total_count = 0
-                if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] is not None:
-                    total_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"])
+                # TODO: to_all廃止によりmembersと照会して取得
+                # if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] is not None:
+                #     total_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"])
+                total_count = 0  # エラー一時回避
                 embed.add_field(name="Invite Count", value=f"{remain_count} / {total_count}")
                 if (inviter_id := self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["from"]) is not None:
                     if (inviter := self.bot.get_user(inviter_id)) is None:
