@@ -228,7 +228,7 @@ class Invite(commands.Cog):
             embed = discord.Embed(title="Code triggers")
             embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
             count = 1
-            for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys():
+            for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys():  # TODO: db対応2L
                 roles = self.bot.db[str(ctx.guild.id)]["roles"]["code"][trigger_name]
                 embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
                 count += 1
@@ -239,7 +239,7 @@ class Invite(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def code_trigger_add(self, ctx, code, *, role):
         # 数を確認
-        if len(self.bot.db[str(ctx.guild.id)]["roles"]["code"]) == 5:
+        if len(self.bot.db[str(ctx.guild.id)]["roles"]["code"]) == 5:  # TODO: db対応
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":x: You already have 5 triggers! Please delete trigger before make new one.")
         # 招待コードを取得
@@ -253,7 +253,7 @@ class Invite(commands.Cog):
             return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
-        if target_code in self.bot.db[str(ctx.guild.id)]["roles"]["code"]:  # 既に設定されている場合は確認する
+        if target_code in self.bot.db[str(ctx.guild.id)]["roles"]["code"]:  # 既に設定されている場合は確認する  # TODO: db対応
             await ctx.send(f":warning: Invite code **{code}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
 
             def check(m):
@@ -265,15 +265,15 @@ class Invite(commands.Cog):
                     return await ctx.send(":negative_squared_cross_mark: Command canceled!")
             except asyncio.TimeoutError:
                 return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
-        self.bot.db[str(ctx.guild.id)]["roles"]["code"][target_code] = target_role
+        self.bot.db[str(ctx.guild.id)]["roles"]["code"][target_code] = target_role  # TODO: db対応
         await ctx.send(f"{self.bot.static_data.emoji.invite_add} Code trigger has created successfully!")
 
     @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def code_trigger_remove(self, ctx, index):
-        if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["code"]):
-            key_list = list(self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys())
-            del self.bot.db[str(ctx.guild.id)]["roles"]["code"][key_list[int(index) - 1]]
+        if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["code"]):  # TODO: db対応
+            key_list = list(self.bot.db[str(ctx.guild.id)]["roles"]["code"].keys())  # TODO: db対応
+            del self.bot.db[str(ctx.guild.id)]["roles"]["code"][key_list[int(index) - 1]]  # TODO: db対応
             await ctx.send(f"{self.bot.static_data.emoji.invite_del} Code trigger **{index}** has deleted successfully!")
         else:
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {len(self.bot.db[str(ctx.guild.id)]['roles']['code'])}.")
@@ -293,8 +293,8 @@ class Invite(commands.Cog):
             embed = discord.Embed(title="User triggers")
             embed.description = f"If participant invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
             count = 1
-            for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys():
-                roles = self.bot.db[str(ctx.guild.id)]["roles"]["user"][trigger_name]
+            for trigger_name in self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys():  # TODO: db対応
+                roles = self.bot.db[str(ctx.guild.id)]["roles"]["user"][trigger_name]  # TODO: db対応
                 embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
                 count += 1
             embed.set_footer(text=f"Total {count - 1} user triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
@@ -304,7 +304,7 @@ class Invite(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger_add(self, ctx, user, *, role):
         # 数を確認
-        if len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]) == 5:
+        if len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]) == 5:  # TODO: db対応
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":x: You already have 5 triggers! Please delete trigger before make new one.")
         # ユーザーを取得
@@ -318,7 +318,7 @@ class Invite(commands.Cog):
             return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
-        if target_user in self.bot.db[str(ctx.guild.id)]["roles"]["user"]:  # 既に設定されている場合は確認する
+        if target_user in self.bot.db[str(ctx.guild.id)]["roles"]["user"]:  # 既に設定されている場合は確認する  # TODO: db対応
             await ctx.send(f":warning: User **{user}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
 
             def check(m):
@@ -330,15 +330,15 @@ class Invite(commands.Cog):
                     return await ctx.send(":negative_squared_cross_mark: Command canceled!")
             except asyncio.TimeoutError:
                 return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
-        self.bot.db[str(ctx.guild.id)]["roles"]["user"][target_user] = target_role
+        self.bot.db[str(ctx.guild.id)]["roles"]["user"][target_user] = target_role  # TODO: db対応
         await ctx.send(f"{self.bot.static_data.emoji.invite_add} User trigger has created successfully!")
 
     @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger_remove(self, ctx, index):
-        if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]):
+        if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]):  # TODO: db対応L2
             key_list = list(self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys())
-            del self.bot.db[str(ctx.guild.id)]["roles"]["user"][key_list[int(index) - 1]]
+            del self.bot.db[str(ctx.guild.id)]["roles"]["user"][key_list[int(index) - 1]]  # TODO: db対応
             await ctx.send(f"{self.bot.static_data.emoji.invite_del} User trigger **{index}** has deleted successfully!")
         else:
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {len(self.bot.db[str(ctx.guild.id)]['roles']['user'])}.")
