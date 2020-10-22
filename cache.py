@@ -28,7 +28,7 @@ class Cache(commands.Cog):
             return await ctx.send(":no_entry_sign: Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
         if not self.bot.check_permission(ctx.author):
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:  # 全員分
             await ctx.send(f":warning: **ARE YOU REALLY WANT TO DELETE ALL INVITE URLS OF THE SERVER?**\nType '**yes**' to continue.")
 

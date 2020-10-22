@@ -28,7 +28,7 @@ class Manage(commands.Cog):
             return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
         if not ctx.author.guild_permissions.kick_members:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please mention at least one user!")
@@ -57,7 +57,7 @@ class Manage(commands.Cog):
             return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
         if not ctx.author.guild_permissions.kick_members:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please mention at least one user!")
@@ -89,7 +89,7 @@ class Manage(commands.Cog):
             return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
         if not ctx.author.guild_permissions.kick_members:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please specify at least one user or invite code!")
@@ -144,7 +144,7 @@ class Manage(commands.Cog):
             return await ctx.send(":no_entry_sign: Missing required permission **__ban_members__**!\nPlease make sure that BOT has right access.")
         if not ctx.author.guild_permissions.ban_members:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__ban_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
+            return await ctx.send(":no_pedestrians: You don't have **__ban_members__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please specify at least one user or invite code!")
