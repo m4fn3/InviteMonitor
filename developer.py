@@ -1,12 +1,19 @@
-from discord.ext import commands
+import asyncio
+import datetime
+import io
+import os
+import subprocess
+import sys
+import textwrap
+import time
+import pprint
 from contextlib import redirect_stdout
-import asyncio, datetime, discord, io, os, subprocess, sys, textwrap, time, traceback2, re
-try:
-    import psutil
-except:
-    psutil_available = False
-else:
-    psutil_available = True
+
+import discord
+import traceback2
+from discord.ext import commands
+
+import psutil
 from main import InviteMonitor
 
 
@@ -15,20 +22,6 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot):
         self.bot = bot  # type: InviteMonitor
         self._last_result = None
-        try:
-            import psutil
-        except:
-            self.psutil = False
-        else:
-            self.psutil = True
-
-    def cleanup_code(self, content):
-        # remove ```py\n```
-        if content.startswith('```') and content.endswith('```'):
-            return '\n'.join(content.split('\n')[1:-1])
-
-        # remove `foo`
-        return content.strip('` \n')
 
     async def cog_before_invoke(self, ctx):
         if ctx.author.id != 513136168112750593:
@@ -39,6 +32,14 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             await ctx.send(f"引数が足りません。\nエラー詳細:\n{error}")
         else:
             await ctx.send(f"エラーが発生しました:\n{error}")
+
+    def cleanup_code(self, content):
+        # remove ```py\n```
+        if content.startswith('```') and content.endswith('```'):
+            return '\n'.join(content.split('\n')[1:-1])
+
+        # remove `foo`
+        return content.strip('` \n')
 
     @commands.group(aliases=["sys"])
     async def system(self, ctx):
@@ -85,7 +86,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     async def restart(self, ctx):
         await ctx.send(":closed_lock_with_key:BOTを再起動します.")
         python = sys.executable
-        os.execl(python, python, * sys.argv)
+        os.execl(python, python, *sys.argv)
 
     @system.command(aliases=["q"])
     async def quit(self, ctx):
@@ -144,14 +145,13 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         h, m = divmod(m, 60)
         d = td.days
         uptime = f"{d}d {h}h {m}m {s}s"
-        if psutil_available:
-            cpu_per = psutil.cpu_percent()
-            mem_total = psutil.virtual_memory().total / 10**9
-            mem_used = psutil.virtual_memory().used / 10**9
-            mem_per = psutil.virtual_memory().percent
-            swap_total = psutil.swap_memory().total / 10**9
-            swap_used = psutil.swap_memory().used / 10**9
-            swap_per = psutil.swap_memory().percent
+        cpu_per = psutil.cpu_percent()
+        mem_total = psutil.virtual_memory().total / 10 ** 9
+        mem_used = psutil.virtual_memory().used / 10 ** 9
+        mem_per = psutil.virtual_memory().percent
+        swap_total = psutil.swap_memory().total / 10 ** 9
+        swap_used = psutil.swap_memory().used / 10 ** 9
+        swap_per = psutil.swap_memory().percent
         guilds = len(self.bot.guilds)
         users = len(self.bot.users)
         vcs = len(self.bot.voice_clients)
@@ -163,9 +163,9 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             elif isinstance(channel, discord.VoiceChannel):
                 voice_channels += 1
         latency = self.bot.latency
+        temp = [obj.current for obj in psutil.sensors_temperatures()['coretemp']]
         embed = discord.Embed(title="Process")
-        if psutil_available:
-            embed.add_field(name="Server", value=f"```yaml\nCPU: [{cpu_per}%]\nMemory: [{mem_per}%] {mem_used:.2f}GiB / {mem_total:.2f}GiB\nSwap: [{swap_per}%] {swap_used:.2f}GiB / {swap_total:.2f}GiB\n```", inline=False)
+        embed.add_field(name="Server", value=f"```yaml\nCPU: [{cpu_per}%]\nMemory: [{mem_per}%] {mem_used:.2f}GiB / {mem_total:.2f}GiB\nSwap: [{swap_per}%] {swap_used:.2f}GiB / {swap_total:.2f}GiB\nTemperature: {','.join(temp)}```", inline=False)
         embed.add_field(name="Discord", value=f"```yaml\nServers: {guilds}\nTextChannels: {text_channels}\nVoiceChannels: {voice_channels}\nUsers: {users}\nConnectedVC: {vcs}```", inline=False)
         embed.add_field(name="Run", value=f"```yaml\nUptime: {uptime}\nLatency: {latency:.2f}[s]\n```")
         await ctx.send(embed=embed)
@@ -181,6 +181,12 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         except:
             await ctx.send(file=discord.File(fp=io.StringIO(msg), filename="output.txt"))
 
+    @commands.command()
+    async def db(self, ctx, *, text):
+        res = await self.bot.db.con.fetch(text)
+        res = [dict(i) for i in res]
+        await ctx.send("```json\n"+pprint.pformat(res)[:1980]+"```")
+
     async def run_subprocess(self, cmd, loop=None):
         loop = loop or asyncio.get_event_loop()
         try:
@@ -193,6 +199,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
                     def kill():
                         process.kill()
                         process.wait()
+
                     await loop.run_in_executor(None, kill)
                     raise
         else:
