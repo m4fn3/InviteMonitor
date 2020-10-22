@@ -294,7 +294,6 @@ class Invite(commands.Cog):
             embed.description = f"If participant invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
             count = 1
             for trigger_name in await self.bot.db.get_user_trigger_list(ctx.guild.id):
-                roles = self.bot.db[str(ctx.guild.id)]["roles"]["user"][trigger_name]  # TODO: db対応
                 roles = await self.bot.db.get_user_trigger_roles(ctx.guild.id, trigger_name)
                 embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
                 count += 1
@@ -305,7 +304,7 @@ class Invite(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger_add(self, ctx, user, *, role):
         # 数を確認
-        if len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]) == 5:  # TODO: db対応
+        if len(await self.bot.db.get_user_trigger_count(ctx.guild.id)) == 5:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":x: You already have 5 triggers! Please delete trigger before make new one.")
         # ユーザーを取得
@@ -319,7 +318,7 @@ class Invite(commands.Cog):
             return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
-        if target_user in self.bot.db[str(ctx.guild.id)]["roles"]["user"]:  # 既に設定されている場合は確認する  # TODO: db対応
+        if target_user in await self.bot.db.get_user_trigger_roles(ctx.guild.id):  # 既に設定されている場合は確認する
             await ctx.send(f":warning: User **{user}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
 
             def check(m):
@@ -331,15 +330,15 @@ class Invite(commands.Cog):
                     return await ctx.send(":negative_squared_cross_mark: Command canceled!")
             except asyncio.TimeoutError:
                 return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
-        self.bot.db[str(ctx.guild.id)]["roles"]["user"][target_user] = target_role  # TODO: db対応
+        await self.bot.db.add_user_trigger(ctx.guild.id, target_user, target_role)
         await ctx.send(f"{self.bot.static_data.emoji.invite_add} User trigger has created successfully!")
 
     @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger_remove(self, ctx, index):
-        if index.isdigit() and 1 <= int(index) <= len(self.bot.db[str(ctx.guild.id)]["roles"]["user"]):  # TODO: db対応L2
+        if index.isdigit() and 1 <= int(index) <= len(await self.bot.db.get_user_trigger_count(ctx.guild.id)):
             key_list = list(self.bot.db[str(ctx.guild.id)]["roles"]["user"].keys())
-            del self.bot.db[str(ctx.guild.id)]["roles"]["user"][key_list[int(index) - 1]]  # TODO: db対応
+            await self.bot.db.remove_user_trigger(ctx.guild.id, key_list[int(index) - 1])
             await ctx.send(f"{self.bot.static_data.emoji.invite_del} User trigger **{index}** has deleted successfully!")
         else:
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {len(self.bot.db[str(ctx.guild.id)]['roles']['user'])}.")
@@ -406,7 +405,6 @@ class Invite(commands.Cog):
         else:  # それ以上の場合
             delta = f"{delta.days // 30}months {delta.seconds % 30}days"
         return [now, delta]
-
 
 
 def setup(bot):
