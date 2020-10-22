@@ -23,10 +23,10 @@ class Cache(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_invites(self, ctx):
         # 設定前に権限を確認
-        if not self.bot.check_permission(ctx.guild.me):
+        if not ctx.guild.me.guild_permissions.manage_guild:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":no_entry_sign: Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
-        if not self.bot.check_permission(ctx.author):
+        if not ctx.author.guild_permissions.manage_guild:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:  # 全員分
@@ -57,7 +57,7 @@ class Cache(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_cache(self, ctx):
         # 設定前に権限を確認
-        if not self.bot.check_permission(ctx.author):
+        if not ctx.author.guild_permissions.manage_guild:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:  # 全員分
