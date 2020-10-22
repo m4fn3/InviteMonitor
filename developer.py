@@ -164,7 +164,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
                 voice_channels += 1
         latency = self.bot.latency
         try:
-            temp = [obj.current for key in psutil.sensors_temperatures() for obj in psutil.sensors_temperatures()[key]]
+            temp = [str(obj.current) for key in psutil.sensors_temperatures() for obj in psutil.sensors_temperatures()[key]]
         except:
             temp = ["N/A"]
         embed = discord.Embed(title="Process")
