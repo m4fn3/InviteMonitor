@@ -163,7 +163,10 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             elif isinstance(channel, discord.VoiceChannel):
                 voice_channels += 1
         latency = self.bot.latency
-        temp = [obj.current for obj in psutil.sensors_temperatures()['coretemp']]
+        try:
+            temp = [obj.current for key in psutil.sensors_temperatures() for obj in psutil.sensors_temperatures()[key]]
+        except:
+            temp = ["N/A"]
         embed = discord.Embed(title="Process")
         embed.add_field(name="Server", value=f"```yaml\nCPU: [{cpu_per}%]\nMemory: [{mem_per}%] {mem_used:.2f}GiB / {mem_total:.2f}GiB\nSwap: [{swap_per}%] {swap_used:.2f}GiB / {swap_total:.2f}GiB\nTemperature: {','.join(temp)}```", inline=False)
         embed.add_field(name="Discord", value=f"```yaml\nServers: {guilds}\nTextChannels: {text_channels}\nVoiceChannels: {voice_channels}\nUsers: {users}\nConnectedVC: {vcs}```", inline=False)
