@@ -85,7 +85,6 @@ class SQLManager:
 
     async def add_code_trigger(self, guild_id: int, code: str, roles: list) -> None:
         # UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2 # [code_trigger][code] = roles
-        # NOTE: 配列をこの形式でいれられるか確認、無理だったら '$1'::jsonb にする
         await self.con.execute("UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2" % code, json.dumps(roles), guild_id)
 
     async def remove_code_trigger(self, guild_id: int, code: str) -> None:
@@ -127,7 +126,6 @@ class SQLManager:
 
     async def add_user_trigger(self, guild_id: int, user_id: int, roles: list) -> None:
         # UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2 # [user_trigger][user_id] = roles
-        # NOTE: 配列をこの形式でいれられるか確認、無理だったら '$1'::jsonb にする
         await self.con.execute("UPDATE SERVER SET user_trigger = jsonb_set(user_trigger, '{%d}', $1::jsonb) where id = $2" % user_id, json.dumps(roles), guild_id)
 
     async def remove_user_trigger(self, guild_id: int, user: int) -> None:
