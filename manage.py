@@ -81,7 +81,7 @@ class Manage(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick_with(self, ctx):
         # そのサーバーでログが設定されているか確認
-        if self.bot.db[str(ctx.guild.id)]["channel"] is None:
+        if not await self.bot.db.is_enabled_guild(ctx.guild.id):
             return await ctx.send(f":warning: Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
         # 権限を確認
         if not ctx.guild.me.guild_permissions.kick_members:
@@ -108,9 +108,9 @@ class Manage(commands.Cog):
                 target_invites.add(invite)
                 target_users.add(self.bot.cache[ctx.guild.id][invite]["author"])
         # 指定されたユーザーに招待された人のIDのリストを作成
-        for user in self.bot.db[str(ctx.guild.id)]["users"]:
+        for user in await self.bot.db.get_guild_users(ctx.guild.id):
             # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
-            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in target_invites):
+            if (await self.bot.db.get_user_invite_from(ctx.guild.id, user) in mentions) or (await self.bot.db.get_user_invite_code(ctx.guild.id, user) in target_invites):
                 target_users.add(int(user))
         target_users = target_users.union(mentions)
         # Kickに成功した人のみのリストを作成
@@ -136,7 +136,7 @@ class Manage(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban_with(self, ctx):
         # そのサーバーでログが設定されているか確認
-        if self.bot.db[str(ctx.guild.id)]["channel"] is None:
+        if not await self.bot.db.is_enabled_guild(ctx.guild.id):
             return await ctx.send(f":warning: Monitoring not enabled!. Please setup by `{self.bot.PREFIX}enable` command before using this feature.")
         # 権限を確認
         if not ctx.guild.me.guild_permissions.ban_members:
@@ -163,9 +163,9 @@ class Manage(commands.Cog):
                 target_invites.add(invite)
                 target_users.add(self.bot.cache[ctx.guild.id][invite]["author"])
         # 指定されたユーザーに招待された人のIDのリストを作成
-        for user in self.bot.db[str(ctx.guild.id)]["users"]:
+        for user in await self.bot.db.get_guild_users(ctx.guild.id):
             # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
-            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in target_invites):
+            if (await self.bot.db.get_user_invite_from(ctx.guild.id, user) in mentions) or (await self.bot.db.get_user_invite_code(ctx.guild.id, user) in target_invites):
                 target_users.add(int(user))
         target_users = target_users.union(mentions)
         # Kickに成功した人のみのリストを作成

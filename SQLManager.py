@@ -45,6 +45,21 @@ class SQLManager:
         """新規サーバーのデータを追加"""
         await self.con.execute("INSERT INTO server values($1)", guild_id)
 
+    async def get_guild_users_count(self, guild_id: int) -> int:
+        res = await self.con.fetchrow("SELECT count(keys) FROM (SELECT jsonb_object_keys(users) AS keys FROM server WHERE id = $1)r ;", guild_id)
+        if res is None or res["count"] is None:
+            return 0
+        else:
+            return res["count"]
+
+    async def get_guild_users(self, guild_id: int) -> list:
+        """保存されているユーザーのリストを取得"""
+        res = await self.con.fetchrow("SELECT array_agg(keys) FROM (SELECT jsonb_object_keys(users) AS keys FROM server WHERE id = $1)r ;", guild_id)
+        if res is None or res["array_agg"] is None:
+            return []
+        else:
+            return res["array_agg"]
+
     async def get_enabled_guild_ids(self) -> list:
         """登録されているサーバーIDのリストを取得"""
         # SELECT array_agg(id) FROM server WHERE channel is not null // channelがnullでない(=有効化されている)サーバーのidを配列で取得
@@ -162,6 +177,14 @@ class SQLManager:
         """新規ユーザーデータを追加"""
         init_data = {user_id: {"to": [], "from": None, "code": None}}
         await self.con.execute("UPDATE server SET users = users||$1::jsonb WHERE id = $2", json.dumps(init_data), guild_id)
+
+    async def get_user_invite_count(self, guild_id: int, user_id: int) -> int:
+        """特定ユーザーの招待数を取得"""
+        res = await self.con.fetchrow("SELECT jsonb_array_length(users#>'{%d, to}') FROM server WHERE id = $1;" % user_id, guild_id)
+        if res is None or res["jsonb_array_length"] is None:
+            return 0
+        else:
+            return res["jsonb_array_length"]
 
     async def get_user_invite_from(self, guild_id: int, user_id: int) -> Optional[int]:
         """特定ユーザーの招待元ユーザーIDを取得"""

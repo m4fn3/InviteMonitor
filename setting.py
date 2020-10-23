@@ -34,7 +34,7 @@ class Setting(commands.Cog):
         else:
             target_channel = ctx.message.channel_mentions[0]
         # チャンネルデータを保存
-        self.bot.db[str(ctx.guild.id)]["channel"] = target_channel.id
+        await self.bot.db.enable_guild(ctx.guild.id, target_channel.id)
         await ctx.send(f":chart_with_upwards_trend: Log channel has been set to {target_channel.mention} successfully!\nNow started to monitor invites and report logs.")
 
     @commands.command(usage="disable", description="Stop both monitoring and reporting information in the server.")
@@ -44,39 +44,31 @@ class Setting(commands.Cog):
             return await ctx.send(":no_entry_sign: Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
         if not ctx.author.guild_permissions.manage_guild:
             return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
-        self.bot.db[str(ctx.guild.id)]["channel"] = None
+        await self.bot.db.disable_guild(ctx.guild.id)
         await ctx.send(f":chart_with_downwards_trend: Stopped monitoring and reporting information.\nYou can resume with `{self.bot.PREFIX}enable` command at any time!")
 
     @commands.command(aliases=["st"], usage="status (@user)", description="Show user's information includes inviter and invite counts. If no user mentioned, server status will be displayed.")
     async def status(self, ctx):
         # そのサーバーでログが設定されているか確認
-        if self.bot.db[str(ctx.guild.id)]["channel"] is None:
+        if not await self.bot.db.is_enabled_guild(ctx.guild.id):
             return await ctx.send(f":warning: Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before checking status.")
         if not ctx.message.mentions:
             # 設定を取得
             embed = discord.Embed(title=":chart_with_downwards_trend: Log Settings Status", color=0x9932cc)
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.description = f"Status of the server **{ctx.guild.name}**"
-            embed.add_field(name="Log Channel", value=f"<#{self.bot.db[str(ctx.guild.id)]['channel']}>")
+            embed.add_field(name="Log Channel", value=f"<#{await self.bot.db.get_log_channel_id(ctx.guild.id)}>")
             embed.add_field(name="Member Count", value=f"{len(ctx.guild.members)}")
-            embed.add_field(name="Known Members", value=f"{len(self.bot.db[str(ctx.guild.id)]['users'])}")
+            embed.add_field(name="Known Members", value=f"{await self.bot.db.get_guild_users_count(ctx.guild.id)}")
             embed.add_field(name="Invites Count", value=f"{len(self.bot.cache[ctx.guild.id])}")
             await ctx.send(embed=embed)
         else:
             target_user = ctx.message.mentions[0]
             embed = discord.Embed(title=f":clipboard: {str(target_user)}", color=0xffff00)
             embed.set_thumbnail(url=target_user.avatar_url)
-            if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
-                remain_count = 0
-                if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] is not None:
-                    remain_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"])
-                total_count = 0
-                # TODO: to_all廃止によりmembersと照会して取得
-                # if self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] is not None:
-                #     total_count = len(self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"])
-                total_count = 0  # エラー一時回避
-                embed.add_field(name="Invite Count", value=f"{remain_count} / {total_count}")
-                if (inviter_id := self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["from"]) is not None:
+            if str(target_user.id) in await self.bot.db.get_guild_users(ctx.guild.id):
+                embed.add_field(name="Invite Count", value=f"{await self.bot.db.get_user_invite_count(ctx.guild.id, target_user.id)}")
+                if inviter_id := await self.bot.db.get_user_invite_from(ctx.guild.id, target_user.id):
                     if (inviter := self.bot.get_user(inviter_id)) is None:
                         try:
                             inviter = await self.bot.fetch_user(inviter_id)
