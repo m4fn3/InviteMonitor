@@ -33,11 +33,11 @@ class SQLManager:
         res = await self.con.fetchrow("SELECT count(*) FROM server WHERE channel is not null and id = $1;", guild_id)
         return bool(res)  # 0,1を真偽値に変換
 
-    async def enable_guild(self, guild_id: int, channel_id: int):
+    async def enable_guild(self, guild_id: int, channel_id: int) -> None:
         """有効にする"""
         await self.con.execute("UPDATE server SET channel = $1 WHERE id = $2;", channel_id, guild_id)
 
-    async def disable_guild(self, guild_id: int):
+    async def disable_guild(self, guild_id: int) -> None:
         """無効にする"""
         await self.con.execute("UPDATE server SET channel = null WHERE id = $1;", guild_id)
 
