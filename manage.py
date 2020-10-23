@@ -3,7 +3,7 @@ import re
 from discord.ext import commands
 
 from main import InviteMonitor
-
+import identifier
 
 class Manage(commands.Cog):
     """__Manage members__"""
@@ -19,6 +19,7 @@ class Manage(commands.Cog):
         else:
             await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
+    @identifier.is_has_kick_members()
     @commands.command(usage="kick [@user]", description="Kick the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick(self, ctx):
@@ -48,6 +49,7 @@ class Manage(commands.Cog):
         mentions_text = "<@" + "> <@".join(target_users) + ">"
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
+    @identifier.is_has_ban_members()
     @commands.command(usage="ban [@user]", description="Ban the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban(self, ctx):
@@ -77,6 +79,7 @@ class Manage(commands.Cog):
         mentions_text = "<@" + "> <@".join(target_users) + ">"
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
 
+    @identifier.is_has_kick_members()
     @commands.command(usage="kick_with [@user | invite code]", description="Kick the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick_with(self, ctx):
@@ -132,6 +135,7 @@ class Manage(commands.Cog):
         mentions_text = "<@" + "> <@".join(target_checked) + ">"
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
+    @identifier.is_has_ban_members()
     @commands.command(usage="ban_with [@user | code]", description="Ban the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban_with(self, ctx):

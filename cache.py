@@ -3,7 +3,7 @@ import asyncio
 from discord.ext import commands
 
 from main import InviteMonitor
-
+import identifier
 
 class Cache(commands.Cog):
     """__Clear cached datas__"""
@@ -19,16 +19,10 @@ class Cache(commands.Cog):
         else:
             await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
+    @identifier.is_has_manage_guild()
     @commands.command(aliases=["clear_invite"], usage="clear_invites (@user)", description="Delete invite url/codes made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_invites(self, ctx):
-        # 設定前に権限を確認
-        if not ctx.guild.me.guild_permissions.manage_guild:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.manage_guild:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:  # 全員分
             await ctx.send(f":warning: **ARE YOU REALLY WANT TO DELETE ALL INVITE URLS OF THE SERVER?**\nType '**yes**' to continue.")
             if not await self.bot.confirm(ctx):
@@ -45,13 +39,10 @@ class Cache(commands.Cog):
             mentions_text = "<@" + "> <@".join(target_users) + ">"
             await ctx.send(f":recycle: All server invites created by {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
 
+    @identifier.is_author_has_manage_guild()
     @commands.command(aliases=["clear_caches"], usage="clear_cache (@user)", description="Delete invited counts data of mentioned user. If no user mentioned, delete data of all server members.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_cache(self, ctx):
-        # 設定前に権限を確認
-        if not ctx.author.guild_permissions.manage_guild:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:  # 全員分
             await ctx.send(f":warning: **ARE YOU REALLY WANT TO DELETE INVITED COUNTS DATA OF ALL SERVER MEMBERS?**\nType '**yes**' to continue.")
             if not await self.bot.confirm(ctx):

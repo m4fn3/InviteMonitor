@@ -1,8 +1,10 @@
 import datetime
-import discord
 import time
+
+import discord
 from discord.ext import commands
 
+import identifier
 from main import InviteMonitor
 
 
@@ -17,16 +19,14 @@ class Setting(commands.Cog):
             await ctx.send(f":hourglass_flowing_sand: Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(":placard: Missing required arguments!")
+        elif isinstance(error, commands.CheckFailure):
+            pass
         else:
             await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
+    @identifier.is_has_manage_guild()
     @commands.command(usage="enable (#channel)", description="Start monitor invites and report logs to specified channel. If no channel provided, set to command executed channel.")
     async def enable(self, ctx):
-        # 設定前に権限を確認
-        if not ctx.guild.me.guild_permissions.manage_guild:
-            return await ctx.send(":no_entry_sign: Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.manage_guild:
-            return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         # 対象チャンネルを取得
         target_channel: discord.TextChannel
         if not len(ctx.message.channel_mentions):
@@ -37,13 +37,9 @@ class Setting(commands.Cog):
         await self.bot.db.enable_guild(ctx.guild.id, target_channel.id)
         await ctx.send(f":chart_with_upwards_trend: Log channel has been set to {target_channel.mention} successfully!\nNow started to monitor invites and report logs.")
 
+    @identifier.is_has_manage_guild()
     @commands.command(usage="disable", description="Stop both monitoring and reporting information in the server.")
     async def disable(self, ctx):
-        # 設定前に権限を確認
-        if not ctx.guild.me.guild_permissions.manage_guild:
-            return await ctx.send(":no_entry_sign: Missing required permission **__manage_guild__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.manage_guild:
-            return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         await self.bot.db.disable_guild(ctx.guild.id)
         await ctx.send(f":chart_with_downwards_trend: Stopped monitoring and reporting information.\nYou can resume with `{self.bot.PREFIX}enable` command at any time!")
 
