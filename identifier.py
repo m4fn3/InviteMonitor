@@ -44,3 +44,15 @@ def is_has_ban_members():
         else:
             return True
     return commands.check(predicate)
+
+def is_has_manage_roles():
+    async def predicate(ctx):
+        if not ctx.author.guild_permissions.manage_roles:
+            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permission!\nFor security reasons, this command can only be used by person who has permission.")
+            return False
+        elif not ctx.guild.me.guild_permissions.manage_roles:
+            await ctx.send(":no_entry_sign: BOT doesn't have **__manage_roles__** permission!")
+            return False
+        else:
+            return True
+    return commands.check(predicate)

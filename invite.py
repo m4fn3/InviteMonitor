@@ -7,7 +7,7 @@ import pytz
 from discord.ext import commands
 
 from main import InviteMonitor
-
+import identifier
 
 class Invite(commands.Cog):
     """__Manage invites__"""
@@ -213,17 +213,9 @@ class Invite(commands.Cog):
                     invite_text += new_invite_text
             await ctx.send(invite_text)
 
+    @identifier.is_has_manage_roles()
     @commands.group(usage="code_trigger", description="Make trigger to give the role to users who joined with specific invite code.")
     async def code_trigger(self, ctx):
-        # 設定前に権限を確認
-        if not ctx.guild.me.guild_permissions.manage_roles:
-            ctx.command.reset_cooldown(ctx)
-            await ctx.send(":no_entry_sign: Missing required permission **__manage_roles__**!\nPlease make sure that BOT has right access.")
-            raise Exception("Permission Error")
-        if not ctx.author.guild_permissions.manage_roles:
-            ctx.command.reset_cooldown(ctx)
-            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permission!\nFor security reasons, this command can only be used by person who have permission.")
-            raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code triggers")
             embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
@@ -270,17 +262,9 @@ class Invite(commands.Cog):
         else:
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {len(self.bot.db[str(ctx.guild.id)]['roles']['code'])}.")
 
+    @identifier.is_has_manage_roles()
     @commands.group(usage="user_trigger", description="Make trigger to give the role to users who invited by specific user.")
     async def user_trigger(self, ctx):
-        # 設定前に権限を確認
-        if not ctx.guild.me.guild_permissions.manage_roles:
-            ctx.command.reset_cooldown(ctx)
-            await ctx.send(":no_entry_sign: Missing required permission **__manage_roles__**!\nPlease make sure that BOT has right access.")
-            raise Exception("Permission Error")
-        if not ctx.author.guild_permissions.manage_roles:
-            ctx.command.reset_cooldown(ctx)
-            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permission!\nFor security reasons, this command can only be used by person who have permission.")
-            raise Exception("Permission Error")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers")
             embed.description = f"If participant invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"

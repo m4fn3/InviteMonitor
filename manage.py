@@ -23,13 +23,6 @@ class Manage(commands.Cog):
     @commands.command(usage="kick [@user]", description="Kick the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick(self, ctx):
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please mention at least one user!")
@@ -53,13 +46,6 @@ class Manage(commands.Cog):
     @commands.command(usage="ban [@user]", description="Ban the mentioned user and delete invites made by mentioned user")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban(self, ctx):
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please mention at least one user!")
@@ -86,13 +72,6 @@ class Manage(commands.Cog):
         # そのサーバーでログが設定されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
             return await ctx.send(f":warning: Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please specify at least one user or invite code!")
@@ -142,13 +121,6 @@ class Manage(commands.Cog):
         # そのサーバーでログが設定されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
             return await ctx.send(f":warning: Monitoring not enabled!. Please setup by `{self.bot.PREFIX}enable` command before using this feature.")
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.ban_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__ban_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.ban_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__ban_members__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please specify at least one user or invite code!")
