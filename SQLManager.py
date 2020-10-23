@@ -178,6 +178,10 @@ class SQLManager:
         init_data = {user_id: {"to": [], "from": None, "code": None}}
         await self.con.execute("UPDATE server SET users = users||$1::jsonb WHERE id = $2", json.dumps(init_data), guild_id)
 
+    async def reset_user_data(self, guild_id: int, user_id: int):
+        """既存ユーザーデータをクリア"""
+        await self.con.execute("UPDATE SERVER SET users = jsonb_set(users, '{%d, to}', '[]'::jsonb) where id = $1" % user_id, guild_id)
+
     async def get_user_invite_count(self, guild_id: int, user_id: int) -> int:
         """特定ユーザーの招待数を取得"""
         res = await self.con.fetchrow("SELECT jsonb_array_length(users#>'{%d, to}') FROM server WHERE id = $1;" % user_id, guild_id)

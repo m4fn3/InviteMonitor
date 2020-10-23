@@ -48,17 +48,15 @@ class Cache(commands.Cog):
             if not await self.bot.confirm(ctx):
                 return
             await ctx.send(f"{self.bot.static_data.emoji.loading} It may takes several time if the server is large..")
-            for user in self.bot.db[str(ctx.guild.id)]["users"]:
-                self.bot.db[str(ctx.guild.id)]["users"][user]["to"] = set()
-                self.bot.db[str(ctx.guild.id)]["users"][user]["to_all"] = set()
+            for user in await self.bot.db.get_guild_users(ctx.guild.id):
+                await self.bot.db.reset_user_data(ctx.guild.id, user)
             await ctx.send(":recycle: All cached data has deleted successfully!")
         else:  # 特定ユーザー分
             target_users = []
             for target_user in ctx.message.mentions:
                 target_users.append(str(target_user.id))
-                if str(target_user.id) in self.bot.db[str(ctx.guild.id)]["users"]:
-                    self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to"] = set()
-                    self.bot.db[str(ctx.guild.id)]["users"][str(target_user.id)]["to_all"] = set()
+                if str(target_user.id) in await self.bot.db.get_guild_users(ctx.guild.id):
+                    await self.bot.db.reset_user_data(ctx.guild.id, target_user.id)
             mentions_text = "<@" + "> <@".join(target_users) + ">"
             await ctx.send(f":recycle: All cached data of {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
 
