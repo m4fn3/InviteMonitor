@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import time
@@ -46,7 +45,11 @@ class InviteMonitor(commands.Bot):
             await self.db.connect()  # データベースに接続
         # 全てのサーバーの招待情報のキャッシュを更新
         for guild_id in await self.db.get_enabled_guild_ids():  # 有効化されているサーバーを取得
-            await self.update_server_cache(self.get_guild(guild_id))
+            guild = self.get_guild(guild_id)
+            if guild is None:  # BOTのダウンタイム中にサーバーを退出した場合
+                await self.db.disable_guild(guild_id)
+            else:
+                await self.update_server_cache(guild)
         # 起動後のBOTステータスを設定
         await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
@@ -58,6 +61,7 @@ class InviteMonitor(commands.Bot):
     async def on_guild_remove(self, guild):
         """BOT自身がサーバーを退出した際のイベント"""
         # 招待キャッシュを削除
+        await self.db.disable_guild(guild.id)
         if guild.id in self.cache:
             del self.cache[guild.id]
 

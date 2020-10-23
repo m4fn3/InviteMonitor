@@ -1,5 +1,6 @@
 import asyncpg
 import json
+from typing import Optional
 import traceback2
 
 
@@ -32,6 +33,14 @@ class SQLManager:
         res = await self.con.fetchrow("SELECT count(*) FROM server WHERE channel is not null and id = $1;", guild_id)
         return bool(res)  # 0,1を真偽値に変換
 
+    async def enable_guild(self, guild_id: int, channel_id: int):
+        """有効にする"""
+        await self.con.execute("UPDATE server SET channel = $1 WHERE id = $2;", channel_id, guild_id)
+
+    async def disable_guild(self, guild_id: int):
+        """無効にする"""
+        await self.con.execute("UPDATE server SET channel = null WHERE id = $1;", guild_id)
+
     async def register_new_guild(self, guild_id: int) -> None:
         """新規サーバーのデータを追加"""
         await self.con.execute("INSERT INTO server values($1)", guild_id)
@@ -45,7 +54,7 @@ class SQLManager:
         else:  # データが空の場合
             return []
 
-    async def get_log_channel_id(self, guild_id: int) -> int:
+    async def get_log_channel_id(self, guild_id: int) -> Optional[int]:
         """ログ送信用チャンネルを取得"""
         res = await self.con.fetchrow("SELECT channel FROM server WHERE id = $1", guild_id)
         if res is None or res["channel"] is None:
@@ -154,7 +163,7 @@ class SQLManager:
         init_data = {user_id: {"to": [], "from": None, "code": None}}
         await self.con.execute("UPDATE server SET users = users||$1::jsonb WHERE id = $2", json.dumps(init_data), guild_id)
 
-    async def get_user_invite_from(self, guild_id: int, user_id: int) -> int:
+    async def get_user_invite_from(self, guild_id: int, user_id: int) -> Optional[int]:
         """特定ユーザーの招待元ユーザーIDを取得"""
         # SELECT users#>'{%d, from}' AS f FROM server WHERE id = $1 // [users][user_id][from]にある値を取得
         res = await self.con.fetchrow("SELECT users#>'{%d, from}' AS f FROM server WHERE id = $1;" % user_id, guild_id)
@@ -163,7 +172,7 @@ class SQLManager:
         else:
             return res["f"]
 
-    async def get_user_invite_code(self, guild_id: int, user_id: int) -> str:
+    async def get_user_invite_code(self, guild_id: int, user_id: int) -> Optional[str]:
         """特定ユーザーの参加時の招待コードを取得"""
         # SELECT users#>'{%d, code}' AS f FROM server WHERE id = $1 // [users][user_id][code]にある値を取得
         res = await self.con.fetchrow("SELECT users#>'{%d, code}' AS f FROM server WHERE id = $1;" % user_id, guild_id)
