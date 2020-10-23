@@ -255,16 +255,8 @@ class Invite(commands.Cog):
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
         if target_code in await self.bot.db.get_code_trigger_list(ctx.guild.id):  # 既に設定されている場合は確認する
             await ctx.send(f":warning: Invite code **{code}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
-
-            def check(m):
-                return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
-
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=30)
-                if msg.content not in ["yes", "y", "'yes'"]:
-                    return await ctx.send(":negative_squared_cross_mark: Command canceled!")
-            except asyncio.TimeoutError:
-                return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
+            if not await self.bot.confirm(ctx):
+                return
         await self.bot.db.add_code_trigger(ctx.guild.id, target_code, target_role)
         await ctx.send(f"{self.bot.static_data.emoji.invite_add} Code trigger has created successfully!")
 
@@ -320,16 +312,8 @@ class Invite(commands.Cog):
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
         if target_user in await self.bot.db.get_user_trigger_roles(ctx.guild.id):  # 既に設定されている場合は確認する
             await ctx.send(f":warning: User **{user}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
-
-            def check(m):
-                return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
-
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=30)
-                if msg.content not in ["yes", "y", "'yes'"]:
-                    return await ctx.send(":negative_squared_cross_mark: Command canceled!")
-            except asyncio.TimeoutError:
-                return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
+            if not await self.bot.confirm(ctx):
+                return
         await self.bot.db.add_user_trigger(ctx.guild.id, target_user, target_role)
         await ctx.send(f"{self.bot.static_data.emoji.invite_add} User trigger has created successfully!")
 

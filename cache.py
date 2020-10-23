@@ -31,16 +31,8 @@ class Cache(commands.Cog):
             return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:  # 全員分
             await ctx.send(f":warning: **ARE YOU REALLY WANT TO DELETE ALL INVITE URLS OF THE SERVER?**\nType '**yes**' to continue.")
-
-            def check(m):
-                return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
-
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=30)
-                if msg.content not in ["yes", "y", "'yes'"]:
-                    return await ctx.send(":negative_squared_cross_mark: Command canceled!")
-            except asyncio.TimeoutError:
-                return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
+            if not await self.bot.confirm(ctx):
+                return
             await ctx.send(f"{self.bot.static_data.emoji.loading} It may takes several time if the server is large..")
             for invite in await ctx.guild.invites():
                 await invite.delete()
@@ -62,16 +54,8 @@ class Cache(commands.Cog):
             return await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:  # 全員分
             await ctx.send(f":warning: **ARE YOU REALLY WANT TO DELETE INVITED COUNTS DATA OF ALL SERVER MEMBERS?**\nType '**yes**' to continue.")
-
-            def check(m):
-                return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
-
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=30)
-                if msg.content not in ["yes", "y", "'yes'"]:
-                    return await ctx.send(":negative_squared_cross_mark: Command canceled!")
-            except asyncio.TimeoutError:
-                return await ctx.send(":negative_squared_cross_mark: Command canceled because no text provided for a long time.")
+            if not await self.bot.confirm(ctx):
+                return
             await ctx.send(f"{self.bot.static_data.emoji.loading} It may takes several time if the server is large..")
             for user in self.bot.db[str(ctx.guild.id)]["users"]:
                 self.bot.db[str(ctx.guild.id)]["users"][user]["to"] = set()

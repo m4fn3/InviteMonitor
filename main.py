@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import time
@@ -78,6 +79,21 @@ class InviteMonitor(commands.Bot):
         self.cache[guild.id] = invites
         return invites
 
+    async def confirm(self, ctx):
+        """本当に実行するかの確認"""
+        def check(m):
+            return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
+
+        try:
+            msg = await self.wait_for('message', check=check, timeout=30)
+            if msg.content not in ["yes", "y", "'yes'", "ok"]:
+                await ctx.send(":negative_squared_cross_mark: Canceled!")
+                return 0
+        except asyncio.TimeoutError:
+            await ctx.send(":negative_squared_cross_mark: Canceled because of no reply.")
+            return 0
+        else:
+            return 1
 
 if __name__ == '__main__':
     bot_intents = discord.Intents.all()  # 全てのインテントを有効化
