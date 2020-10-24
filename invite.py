@@ -10,7 +10,7 @@ from main import InviteMonitor
 import identifier
 
 class Invite(commands.Cog):
-    """__Manage invites__"""
+    """Manage invites"""
 
     def __init__(self, bot):
         self.bot = bot  # type: InviteMonitor
@@ -193,7 +193,7 @@ class Invite(commands.Cog):
         else:
             return None  # 何らかの問題で,変更点が見つからなかった場合
 
-    @commands.command(aliases=["inv"], usage="invite (@bot)", description="Show invite URL of this BOT. If bot mentioned, send invite url of mentioned bot")
+    @commands.command(aliases=["inv"], usage="invite (@bot)", brief="BOT's invite link", description="Show invite URL of this BOT. If bot mentioned, send invite url of mentioned bot")
     async def invite(self, ctx):
         if not ctx.message.mentions:  # メンションがない場合、このBOTの招待リンクを表示
             await ctx.send(f"__**Add {self.bot.user.name}!**__\n{self.bot.static_data.invite}\n__**Join Official Server!**__\n{self.bot.static_data.server}")
@@ -212,7 +212,7 @@ class Invite(commands.Cog):
             await ctx.send(invite_text)
 
     @identifier.is_has_manage_roles()
-    @commands.group(usage="code_trigger", description="Make trigger to give the role to users who joined with specific invite code.")
+    @commands.group(usage="code_trigger", brief="Auto role with used code", description="Make trigger to give the role to users who joined with specific invite code.")
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code triggers")
@@ -261,7 +261,7 @@ class Invite(commands.Cog):
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {await self.bot.db.get_code_trigger_count(ctx.guild.id)}.")
 
     @identifier.is_has_manage_roles()
-    @commands.group(usage="user_trigger", description="Make trigger to give the role to users who invited by specific user.")
+    @commands.group(usage="user_trigger", brief="Auto role with inviter", description="Make trigger to give the role to users who invited by specific user.")
     async def user_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers")

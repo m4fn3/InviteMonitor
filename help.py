@@ -7,14 +7,16 @@ import identifier
 class Help(commands.HelpCommand):
     def __init__(self):
         super().__init__()
-        self.description_text = "\nDo you have any questions? Feel free to ask in [official server]({})!"
+        self.description_text = "\n[Need help? Visit the support server!]({})"
+        self.footer_text = "{}help [command] to see detailed information."
 
     async def send_bot_help(self, mapping) -> None:
         cogs: list
         page = 1
         cogs = ["Setting", "Invite", "Manage", "Cache"]
+        # 一枚目の全コマンドリストEmbedを作成
         embed_org = discord.Embed(title=f"{self.context.bot.user.name} Usage", color=0x00ff00)
-        embed_org.description = f"`{self.context.bot.PREFIX}help (command name)` to see detailed description of the command!" + self.description_text.format(self.context.bot.static_data.server)
+        embed_org.description = self.footer_text.format(self.context.bot.PREFIX) + self.description_text.format(self.context.bot.static_data.server)
         for cog_name in cogs:
             cog = discord.utils.get(mapping, qualified_name=cog_name)
             command_list = [command.name for command in identifier.filter_hidden_commands(cog.get_commands())]
@@ -30,40 +32,58 @@ class Help(commands.HelpCommand):
         while True:
             try:
                 reaction, user = await self.context.bot.wait_for("reaction_add", timeout=60, check=check)
-                if str(reaction.emoji) == "▶️":
+                if str(reaction.emoji) == "▶️":  # 次のページに進む
                     if page == len(cogs) + 1:
                         page = 1
                     else:
                         page += 1
-                elif str(reaction.emoji) == "◀️":
+                elif str(reaction.emoji) == "◀️":  # 前のページに戻る
                     if page == 1:
                         page = len(cogs) + 1
                     else:
                         page -= 1
-                elif str(reaction.emoji) == "❔":
+                elif str(reaction.emoji) == "❔":  # 記号説明ページ
                     embed = discord.Embed(title="How to read the help", color=0x00ff00)
                     embed.description = f"You can move the page by pressing the reaction below the message" + self.description_text.format(self.context.bot.static_data.server)
-                    embed.add_field(name="[argument]", value="__**required**__ argument", inline=False)
-                    embed.add_field(name="(argument)", value="__**option**__", inline=False)
-                    embed.add_field(name="[A|B]", value="either A or B", inline=False)
+                    embed.add_field(name="[argument]", value="→ __**required**__ argument", inline=False)
+                    embed.add_field(name="(argument)", value="→ __**optional**__ argument", inline=False)
+                    embed.add_field(name="[A|B]", value="→ either A or B", inline=False)
+                    embed.add_field(name="Others", value="code ... Invite Code")
                     await message.edit(embed=embed)
                     continue
-                if page == 1:
+                if page == 1:  # 既に用意された1枚目を表示
                     await message.edit(embed=embed_org)
                     continue
                 cog = discord.utils.get(mapping, qualified_name=cogs[page - 2])
-                cmds = cog.get_commands()
                 embed = discord.Embed(title=cog.qualified_name, color=0x00ff00)
-                embed.description = cog.description + self.description_text.format(self.context.bot.static_data.server)
-                for cmd in identifier.filter_hidden_commands(cmds):
-                    description = cmd.brief if cmd.brief is not None else cmd.description
-                    embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"```{description}```", inline=False)
+                desc = cog.description + self.description_text.format(self.context.bot.static_data.server) + "\n"
+                command_list = cog.get_commands()
+                max_length = self.get_command_max_length(command_list)
+                for cmd in identifier.filter_hidden_commands(command_list):
+                    # 適切な空白数分、空白を追加 -> `i/enable  |` 有効にします
+                    desc += f"\n`i/{cmd.name}" + " " * self.get_space_count(len(cmd.name), max_length) + f"|` {cmd.brief}"
+                embed.description = desc
+                embed.set_footer(text=self.footer_text.format(self.context.bot.PREFIX))
                 await message.edit(embed=embed)
             except asyncio.TimeoutError:
                 await message.remove_reaction("◀️", self.context.bot.user)
                 await message.remove_reaction("▶️", self.context.bot.user)
                 await message.remove_reaction("❔", self.context.bot.user)
                 break
+
+    def get_space_count(self, name: int, max_length: int) -> int:
+        diff = max_length - name
+        if diff < 0:
+            return 0
+        else:
+            return diff
+
+    def get_command_max_length(self, command_list):
+        max_length = 8
+        for command in command_list:
+            if len(command.name) > max_length:
+                max_length = len(command.name)
+        return max_length
 
     async def send_cog_help(self, cog) -> None:
         cmds = cog.get_commands()
