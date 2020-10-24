@@ -8,7 +8,7 @@ class Help(commands.HelpCommand):
     def __init__(self):
         super().__init__()
         self.description_text = "\n[Need help? Visit the support server!]({})"
-        self.footer_text = "{}help [command] to see detailed information."
+        self.footer_text = "{}help [command]  to learn more!"
 
     async def send_bot_help(self, mapping) -> None:
         cogs: list
@@ -86,11 +86,15 @@ class Help(commands.HelpCommand):
         return max_length
 
     async def send_cog_help(self, cog) -> None:
-        cmds = cog.get_commands()
         embed = discord.Embed(title=cog.qualified_name, color=0x00ff00)
-        embed.description = cog.description
-        for cmd in identifier.filter_hidden_commands(cmds):
-            embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"```{cmd.description}```", inline=False)
+        desc = cog.description + self.description_text.format(self.context.bot.static_data.server) + "\n"
+        command_list = cog.get_commands()
+        max_length = self.get_command_max_length(command_list)
+        for cmd in identifier.filter_hidden_commands(command_list):
+            # 適切な空白数分、空白を追加 -> `i/enable  |` 有効にします
+            desc += f"\n`i/{cmd.name}" + " " * self.get_space_count(len(cmd.name), max_length) + f"|` {cmd.brief}"
+        embed.description = desc
+        embed.set_footer(text=self.footer_text.format(self.context.bot.PREFIX))
         await self.get_destination().send(embed=embed)
 
     async def send_group_help(self, group):
