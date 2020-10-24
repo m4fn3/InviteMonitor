@@ -1,5 +1,6 @@
 from discord.ext import commands
 
+
 def is_author_has_manage_guild():
     """サーバーの管理 権限を実行者が持っているか判定"""
     async def predicate(ctx):
@@ -62,6 +63,9 @@ def is_has_manage_roles():
             return True
     return commands.check(predicate)
 
-def filter_hidden_commands(command_list):
+def filter_hidden_commands(command_list, sort=False):
     """コマンドリストの中から隠し属性を持つコマンドを削除"""
-    return [cmd for cmd in command_list if not cmd.hidden]
+    res = [cmd for cmd in command_list if not cmd.hidden]
+    if sort:
+        res.sort(key=lambda cmd: cmd.qualified_name)
+    return res

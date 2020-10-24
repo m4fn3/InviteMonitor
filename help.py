@@ -105,7 +105,7 @@ class Help(commands.HelpCommand):
         if group.help:
             embed.add_field(name="Example:", value=group.help.format(self.context.bot.PREFIX), inline=False)
         cmds = group.walk_commands()
-        for cmd in identifier.filter_hidden_commands(cmds):
+        for cmd in identifier.filter_hidden_commands(cmds, sort=True):
             embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"→ {cmd.description}", inline=False)
         embed.set_footer(text=self.footer_text.format(self.context.bot.PREFIX))
         await self.get_destination().send(embed=embed)
