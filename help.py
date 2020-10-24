@@ -2,7 +2,7 @@ import asyncio
 import discord
 
 from discord.ext import commands
-
+import identifier
 
 class Help(commands.HelpCommand):
     def __init__(self):
@@ -17,7 +17,7 @@ class Help(commands.HelpCommand):
         embed_org.description = f"`{self.context.bot.PREFIX}help (command name)` to see detailed description of the command!" + self.description_text.format(self.context.bot.static_data.server)
         for cog_name in cogs:
             cog = discord.utils.get(mapping, qualified_name=cog_name)
-            command_list = [command.name for command in await self.filter_commands(cog.get_commands())]
+            command_list = [command.name for command in identifier.filter_hidden_commands(cog.get_commands())]
             embed_org.add_field(name=cog_name, value="`" + "`, `".join(command_list) + "`", inline=False)
         message = await self.get_destination().send(embed=embed_org)
         await message.add_reaction("◀️")
@@ -55,7 +55,7 @@ class Help(commands.HelpCommand):
                 cmds = cog.get_commands()
                 embed = discord.Embed(title=cog.qualified_name, color=0x00ff00)
                 embed.description = cog.description + self.description_text.format(self.context.bot.static_data.server)
-                for cmd in await self.filter_commands(cmds):
+                for cmd in identifier.filter_hidden_commands(cmds):
                     description = cmd.brief if cmd.brief is not None else cmd.description
                     embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"```{description}```", inline=False)
                 await message.edit(embed=embed)
@@ -69,7 +69,7 @@ class Help(commands.HelpCommand):
         cmds = cog.get_commands()
         embed = discord.Embed(title=cog.qualified_name, color=0x00ff00)
         embed.description = cog.description
-        for cmd in await self.filter_commands(cmds):
+        for cmd in identifier.filter_hidden_commands(cmds):
             embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"```{cmd.description}```", inline=False)
         await self.get_destination().send(embed=embed)
 
@@ -81,8 +81,8 @@ class Help(commands.HelpCommand):
         if group.help:
             embed.add_field(name="Example:", value=group.help.format(self.context.bot.PREFIX), inline=False)
         cmds = group.walk_commands()
-        embed.add_field(name="Subcommand:", value=f"{sum(1 for _ in await self.filter_commands(group.walk_commands()))}")
-        for cmd in await self.filter_commands(cmds):
+        embed.add_field(name="Subcommand:", value=f"{sum(1 for _ in identifier.filter_hidden_commands(group.walk_commands()))}")
+        for cmd in identifier.filter_hidden_commands(cmds):
             embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"{cmd.description}", inline=False)
         await self.get_destination().send(embed=embed)
 
