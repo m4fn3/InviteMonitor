@@ -193,7 +193,7 @@ class Invite(commands.Cog):
         else:
             return None  # 何らかの問題で,変更点が見つからなかった場合
 
-    @commands.command(aliases=["inv"], usage="invite (@bot)", brief="BOT's invite link", description="Show invite URL of this BOT. If bot mentioned, send invite url of mentioned bot")
+    @commands.command(aliases=["inv"], usage="invite (@bot)", brief="Get bot's invite link", description="Show invite link of the bot. If some bot mentioned, send invite link of those.")
     async def invite(self, ctx):
         if not ctx.message.mentions:  # メンションがない場合、このBOTの招待リンクを表示
             await ctx.send(f"__**Add {self.bot.user.name}!**__\n{self.bot.static_data.invite}\n__**Join Official Server!**__\n{self.bot.static_data.server}")
@@ -212,7 +212,7 @@ class Invite(commands.Cog):
             await ctx.send(invite_text)
 
     @identifier.is_has_manage_roles()
-    @commands.group(usage="code_trigger", brief="Auto role with used code", description="Make trigger to give the role to users who joined with specific invite code.")
+    @commands.group(usage="code_trigger", brief="Auto role with used code", description="Manage triggers that give specific role to participant who joined with specific invite code.")
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code triggers")
@@ -225,7 +225,7 @@ class Invite(commands.Cog):
             embed.set_footer(text=f"Total {count - 1} code triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
-    @code_trigger.command(name="add", usage="user_trigger add [invite code] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
+    @code_trigger.command(name="add", usage="user_trigger add [invite code] [@role]", description="Add new trigger. (If participant joined with [invite code], then give [@role])")
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def code_trigger_add(self, ctx, code, *, role):
         # 数を確認
@@ -250,7 +250,7 @@ class Invite(commands.Cog):
         await self.bot.db.add_code_trigger(ctx.guild.id, target_code, target_role)
         await ctx.send(f"{self.bot.static_data.emoji.invite_add} Code trigger has created successfully!")
 
-    @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
+    @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Remove exist trigger.", alias=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def code_trigger_remove(self, ctx, index):
         if index.isdigit() and 1 <= int(index) <= await self.bot.db.get_code_trigger_count(ctx.guild.id):
@@ -261,11 +261,11 @@ class Invite(commands.Cog):
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {await self.bot.db.get_code_trigger_count(ctx.guild.id)}.")
 
     @identifier.is_has_manage_roles()
-    @commands.group(usage="user_trigger", brief="Auto role with inviter", description="Make trigger to give the role to users who invited by specific user.")
+    @commands.group(usage="user_trigger", brief="Auto role with inviter", description="Manage triggers that give specific roles to participant who invited by specific user.")
     async def user_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers")
-            embed.description = f"If participant invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
+            embed.description = f"If participant was invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
             count = 1
             for trigger_name in await self.bot.db.get_user_trigger_list(ctx.guild.id):
                 roles = await self.bot.db.get_user_trigger_roles(ctx.guild.id, trigger_name)
@@ -274,7 +274,7 @@ class Invite(commands.Cog):
             embed.set_footer(text=f"Total {count - 1} user triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
-    @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. mention/ID/name are allowed to specify.")
+    @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. (If participant was invited by [@user], then give [@role]).")
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger_add(self, ctx, user, *, role):
         # 数を確認

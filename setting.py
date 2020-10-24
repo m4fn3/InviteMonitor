@@ -25,7 +25,7 @@ class Setting(commands.Cog):
             await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
     @identifier.is_has_manage_guild()
-    @commands.command(usage="enable (#channel)", brief="Start monitor", description="Start monitor invites and report logs to specified channel. If no channel provided, set to command executed channel.")
+    @commands.command(usage="enable (#channel)", brief="Start monitoring", description="Start monitor invites and report logs to specified channel. If no channel provided, set to channel command executed.")
     async def enable(self, ctx):
         # 対象チャンネルを取得
         target_channel: discord.TextChannel
@@ -38,12 +38,12 @@ class Setting(commands.Cog):
         await ctx.send(f":chart_with_upwards_trend: Log channel has been set to {target_channel.mention} successfully!\nNow started to monitor invites and report logs.")
 
     @identifier.is_has_manage_guild()
-    @commands.command(usage="disable", brief="Stop monitor", description="Stop both monitoring and reporting information in the server.")
+    @commands.command(usage="disable", brief="Stop monitoring", description="Stop monitoring and reporting information in the server.")
     async def disable(self, ctx):
         await self.bot.db.disable_guild(ctx.guild.id)
         await ctx.send(f":chart_with_downwards_trend: Stopped monitoring and reporting information.\nYou can resume with `{self.bot.PREFIX}enable` command at any time!")
 
-    @commands.command(aliases=["st"], brief="See cached status", usage="status (@user)", description="Show user's information includes inviter and invite counts. If no user mentioned, server status will be displayed.")
+    @commands.command(aliases=["st"], brief="See cached status", usage="status (@user)", description="Show user's data includes inviter and invite counts. If no user mentioned, server status will be shown.")
     async def status(self, ctx):
         # そのサーバーでログが設定されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
@@ -79,7 +79,7 @@ class Setting(commands.Cog):
             embed.add_field(name="Joined At", value=ctx.guild.get_member(target_user.id).joined_at.strftime("%Y/%m/%d %H:%M:%S"))
             await ctx.send(embed=embed)
 
-    @commands.command(usage="about", brief="About the BOT", description="Show the information about his BOT")
+    @commands.command(aliases=["info"], usage="about", brief="About the bot", description="Show the information about the bot.")
     async def about(self, ctx):
         embed = discord.Embed(title=f"About {self.bot.user.name}", color=0xffe4b5)
         embed.description = f"""**Thank you for using {self.bot.user.name}!**

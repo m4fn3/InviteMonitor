@@ -95,15 +95,14 @@ class Help(commands.HelpCommand):
 
     async def send_group_help(self, group):
         embed = discord.Embed(title=f"{self.context.bot.PREFIX}{group.usage}", color=0x00ff00)
-        embed.description = f"```{group.description}```"
+        embed.description = f"```{group.description}```\n"
         if group.aliases:
             embed.add_field(name="Alias:", value="`" + "`, `".join(group.aliases) + "`", inline=False)
         if group.help:
             embed.add_field(name="Example:", value=group.help.format(self.context.bot.PREFIX), inline=False)
         cmds = group.walk_commands()
-        embed.add_field(name="Subcommand:", value=f"{sum(1 for _ in identifier.filter_hidden_commands(group.walk_commands()))}")
         for cmd in identifier.filter_hidden_commands(cmds):
-            embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"{cmd.description}", inline=False)
+            embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"→ {cmd.description}", inline=False)
         await self.get_destination().send(embed=embed)
 
     async def send_command_help(self, command) -> None:

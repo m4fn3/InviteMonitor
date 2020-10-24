@@ -20,7 +20,7 @@ class Manage(commands.Cog):
             await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
     @identifier.is_has_kick_members()
-    @commands.command(usage="kick [@user]", brief="Kick and wipe their invite", description="Kick the mentioned user and delete invites made by mentioned user")
+    @commands.command(usage="kick [@user]", brief="Kick and wipe their invite", description="Kick the mentioned user and delete invites made by that user.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick(self, ctx):
         if not ctx.message.mentions:
@@ -43,7 +43,7 @@ class Manage(commands.Cog):
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
     @identifier.is_has_ban_members()
-    @commands.command(usage="ban [@user]", brief="Ban and wipe their invite", description="Ban the mentioned user and delete invites made by mentioned user")
+    @commands.command(usage="ban [@user]", brief="Ban and wipe their invite", description="Ban the mentioned user and delete invites made by that user.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban(self, ctx):
         if not ctx.message.mentions:
@@ -66,7 +66,7 @@ class Manage(commands.Cog):
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
 
     @identifier.is_has_kick_members()
-    @commands.command(usage="kick_with [@user | invite code]", brief="Kick with inviter or code", description="Kick the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
+    @commands.command(usage="kick_with [@user | invite code]", brief="Kick with inviter or code", description="Kick the members who was invited by specified user or invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick_with(self, ctx):
         # そのサーバーでログが設定されているか確認
@@ -115,7 +115,7 @@ class Manage(commands.Cog):
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
     @identifier.is_has_ban_members()
-    @commands.command(usage="ban_with [@user | code]", brief="Ban with inviter or code", description="Ban the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
+    @commands.command(usage="ban_with [@user | code]", brief="Ban with inviter or code", description="Ban the members who was invited by specified user or invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban_with(self, ctx):
         # そのサーバーでログが設定されているか確認
