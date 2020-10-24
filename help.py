@@ -107,6 +107,7 @@ class Help(commands.HelpCommand):
         cmds = group.walk_commands()
         for cmd in identifier.filter_hidden_commands(cmds):
             embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"→ {cmd.description}", inline=False)
+        embed.set_footer(text=self.footer_text.format(self.context.bot.PREFIX))
         await self.get_destination().send(embed=embed)
 
     async def send_command_help(self, command) -> None:
@@ -119,13 +120,13 @@ class Help(commands.HelpCommand):
         await self.get_destination().send(embed=embed)
 
     async def send_error_message(self, error) -> None:
-        embed = discord.Embed(title="Help Error", description=error, color=0xff0000)
+        embed = discord.Embed(title="Error on help", description=error, color=0xff0000)
         await self.get_destination().send(embed=embed)
 
     def command_not_found(self, string):
-        return f"Command **{string}** was not found!\nPlease check the command name!"
+        return f"Command **{string}** was not found!\nPlease check the command name."
 
     def subcommand_not_found(self, cmd, string):
         if isinstance(cmd, commands.Group) and len(cmd.all_commands) > 0:
-            return f"Subcommand **{string}** is not registered to **{cmd.qualified_name}** command!\nPlease check correct usage by __**{self.context.bot.PREFIX}help {cmd.qualified_name}**__"
-        return f"**{cmd.qualified_name}** command doesn't have subcommand!\nPlease check correct usage by __**{self.context.bot.PREFIX}help {cmd.qualified_name}**__"
+            return f"Subcommand **{string}** is not registered to **{cmd.qualified_name}** command!\nPlease check correct usage by `{self.context.bot.PREFIX}help {cmd.qualified_name}`"
+        return f"**{cmd.qualified_name}** command doesn't have subcommand!\nPlease check correct usage by `{self.context.bot.PREFIX}help {cmd.qualified_name}`"

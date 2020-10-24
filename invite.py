@@ -274,7 +274,7 @@ class Invite(commands.Cog):
             embed.set_footer(text=f"Total {count - 1} user triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
-    @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. (If participant was invited by [@user], then give [@role]).")
+    @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. (If participant was invited by [@user], then give [@role])")
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger_add(self, ctx, user, *, role):
         # 数を確認
