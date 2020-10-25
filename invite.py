@@ -89,7 +89,6 @@ class Invite(commands.Cog):
                 new_invite_cache = await self.bot.update_server_cache(member.guild)  # 後の招待キャッシュを取得
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)  # 差異から招待者を特定
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data.emoji_member_join} Member Joined", color=0x00ffff)
                 embed = discord.Embed(color=0x00ffff)
                 embed.set_author(name="Member Joined", icon_url="https://cdn.discordapp.com/emojis/762305608271265852.png?v=1")
                 embed.set_thumbnail(url=member.avatar_url)

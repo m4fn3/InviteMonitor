@@ -1,9 +1,13 @@
-from discord.ext import commands
+import traceback2
+from functools import wraps
+
 import discord
+from discord.ext import commands
 
 
 def is_author_has_manage_guild():
     """サーバーの管理 権限を実行者が持っているか判定"""
+
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_guild:
             embed = discord.Embed(title="Missing Permission", description="You don't have __manage_guild__ permission!", color=discord.Color.red())
@@ -11,10 +15,13 @@ def is_author_has_manage_guild():
             return False
         else:
             return True
+
     return commands.check(predicate)
+
 
 def is_has_manage_guild():
     """サーバーの管理 権限をBOTと実行者が持っているか判定"""
+
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_guild:
             embed = discord.Embed(title="Missing Permission", description="You don't have __manage_guild__ permission!", color=discord.Color.red())
@@ -26,10 +33,13 @@ def is_has_manage_guild():
             return False
         else:
             return True
+
     return commands.check(predicate)
+
 
 def is_has_kick_members():
     """メンバーをキック 権限をBOTと実行者が持っているか判定"""
+
     async def predicate(ctx):
         if not ctx.author.guild_permissions.kick_members:
             embed = discord.Embed(title="Missing Permission", description="You don't have __kick_members__ permission!", color=discord.Color.red())
@@ -41,10 +51,13 @@ def is_has_kick_members():
             return False
         else:
             return True
+
     return commands.check(predicate)
+
 
 def is_has_ban_members():
     """メンバーをBAN 権限をBOTと実行者が持っているか判定"""
+
     async def predicate(ctx):
         if not ctx.author.guild_permissions.ban_members:
             embed = discord.Embed(title="Missing Permission", description="You don't have __ban_members__ permission!", color=discord.Color.red())
@@ -56,10 +69,13 @@ def is_has_ban_members():
             return False
         else:
             return True
+
     return commands.check(predicate)
+
 
 def is_has_manage_roles():
     """役職の管理 権限をBOTと実行者が持っているか判定"""
+
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_roles:
             embed = discord.Embed(title="Missing Permission", description="You don't have __manage_roles__ permission!", color=discord.Color.red())
@@ -71,7 +87,9 @@ def is_has_manage_roles():
             return False
         else:
             return True
+
     return commands.check(predicate)
+
 
 def filter_hidden_commands(command_list, sort=False):
     """コマンドリストの中から隠し属性を持つコマンドを削除"""
@@ -79,3 +97,16 @@ def filter_hidden_commands(command_list, sort=False):
     if sort:
         res.sort(key=lambda cmd: cmd.qualified_name)
     return res
+
+
+def debugger(func):
+    @wraps(func)
+    async def wrapped(self, *args, **kwargs):
+        try:
+            return await func(self, *args, **kwargs)
+        except Exception as e:
+            orig_error = getattr(e, 'original', e)
+            error_msg = ''.join(traceback2.TracebackException.from_exception(orig_error).format())
+            await self.bot.get_channel(664376321278738453).send(f'{error_msg}')
+
+    return wrapped
