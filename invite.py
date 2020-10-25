@@ -17,15 +17,14 @@ class Invite(commands.Cog):
         self.bot = bot  # type: InviteMonitor
 
     async def cog_command_error(self, ctx, error):
-        """コマンド処理でエラーが発生した際の処理"""
-        if isinstance(error, commands.CommandOnCooldown):  # クールダウン
-            await ctx.send(f":hourglass_flowing_sand: Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
-        elif isinstance(error, commands.MissingRequiredArgument):  # 引数不足
-            await ctx.send(":placard: Missing required arguments!")
+        if isinstance(error, commands.CommandOnCooldown):
+            await error_embed_builder(ctx, f"Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await error_embed_builder(ctx, "Missing required arguments!")
         elif isinstance(error, commands.CheckFailure):
             pass
-        else:  # 予期しないエラー
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
+        else:
+            await error_embed_builder(ctx, f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
     async def catch_user(self, user_id: int):
         """効率よくユーザーデータを取得する"""

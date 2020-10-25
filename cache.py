@@ -15,13 +15,13 @@ class Cache(commands.Cog):
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f":hourglass_flowing_sand: Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
+            await error_embed_builder(ctx, f"Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(":placard: Missing required arguments!")
+            await error_embed_builder(ctx, "Missing required arguments!")
         elif isinstance(error, commands.CheckFailure):
             pass
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
+            await error_embed_builder(ctx, f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
     @identifier.is_has_manage_guild()
     @commands.command(aliases=["clear_invite"], brief="Clear invites", usage="clear_invites (@user)", description="Delete invites made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")
