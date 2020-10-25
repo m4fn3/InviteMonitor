@@ -44,11 +44,19 @@ class Help(commands.HelpCommand):
                         page -= 1
                 elif str(reaction.emoji) == "❔":  # 記号説明ページ
                     embed = discord.Embed(title="How to read the help", color=0x00ff00)
-                    embed.description = self.footer_text.format(self.context.bot.PREFIX) + self.description_text.format(self.context.bot.static_data.server)
-                    embed.add_field(name="[argument]", value="→ __**required**__ argument", inline=False)
-                    embed.add_field(name="(argument)", value="→ __**optional**__ argument", inline=False)
-                    embed.add_field(name="[A|B]", value="→ either A or B", inline=False)
-                    embed.add_field(name="Others", value="・'code' ... Invite code\n(e.g.) RbzSSrw is code of https://discord.gg/RbzSSrw")
+                    embed.description = self.footer_text.format(self.context.bot.PREFIX) + self.description_text.format(self.context.bot.static_data.server) + """
+
+Argument
+> `[argument] :`  __**required**__
+> `(argument) :`  __**optional**__
+> `[A|B]      :`  either A or B
+Others
+> • **code** ... Invite code\n> (e.g.) RbzSSrw is code of https://discord.gg/RbzSSrw
+                    """
+                    # embed.add_field(name="[argument]", value="→ __**required**__ argument", inline=False)
+                    # embed.add_field(name="(argument)", value="→ __**optional**__ argument", inline=False)
+                    # embed.add_field(name="[A|B]", value="→ either A or B", inline=False)
+                    # embed.add_field(name="Others", value="・'code' ... Invite code\n(e.g.) RbzSSrw is code of https://discord.gg/RbzSSrw")
                     await message.edit(embed=embed)
                     continue
                 if page == 1:  # 既に用意された1枚目を表示
