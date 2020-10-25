@@ -45,7 +45,6 @@ class Help(commands.HelpCommand):
                 elif str(reaction.emoji) == "❔":  # 記号説明ページ
                     embed = discord.Embed(title="How to read the help", color=0x00ff00)
                     embed.description = self.footer_text.format(self.context.bot.PREFIX) + self.description_text.format(self.context.bot.static_data.server) + """
-
 Argument
 > `[argument] :`  __**required**__
 > `(argument) :`  __**optional**__
@@ -107,22 +106,23 @@ Others
 
     async def send_group_help(self, group):
         embed = discord.Embed(title=f"{self.context.bot.PREFIX}{group.usage}", color=0x00ff00)
-        embed.description = f"```{group.description}```\n"
+        desc = f"{group.description}\n\n"
         if group.aliases:
-            embed.add_field(name="Alias:", value="`" + "`, `".join(group.aliases) + "`", inline=False)
+            embed.add_field(name="Aliases:", value="`" + "`, `".join(group.aliases) + "`", inline=False)
         if group.help:
             embed.add_field(name="Example:", value=group.help.format(self.context.bot.PREFIX), inline=False)
         cmds = group.walk_commands()
         for cmd in identifier.filter_hidden_commands(cmds, sort=True):
-            embed.add_field(name=f"{self.context.bot.PREFIX}{cmd.usage}", value=f"→ {cmd.description}", inline=False)
+            desc += f"**{self.context.bot.PREFIX}{cmd.usage}**\n-> *{cmd.description}*\n\n"
+        embed.description = desc
         embed.set_footer(text=self.footer_text.format(self.context.bot.PREFIX))
         await self.get_destination().send(embed=embed)
 
     async def send_command_help(self, command) -> None:
         embed = discord.Embed(title=f"{self.context.bot.PREFIX}{command.usage}", color=0x00ff00)
-        embed.description = f"```{command.description}```"
+        embed.description = f"{command.description}"
         if command.aliases:
-            embed.add_field(name="Alias:", value="`" + "`, `".join(command.aliases) + "`", inline=False)
+            embed.add_field(name="Aliases:", value="`" + "`, `".join(command.aliases) + "`", inline=False)
         if command.help:
             embed.add_field(name="Example:", value=command.help.format(self.context.bot.PREFIX), inline=False)
         await self.get_destination().send(embed=embed)
@@ -138,3 +138,5 @@ Others
         if isinstance(cmd, commands.Group) and len(cmd.all_commands) > 0:
             return f"Subcommand **{string}** is not registered to **{cmd.qualified_name}** command!\nPlease check correct usage by `{self.context.bot.PREFIX}help {cmd.qualified_name}`"
         return f"**{cmd.qualified_name}** command doesn't have subcommand!\nPlease check correct usage by `{self.context.bot.PREFIX}help {cmd.qualified_name}`"
+
+
