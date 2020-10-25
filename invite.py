@@ -38,16 +38,18 @@ class Invite(commands.Cog):
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
         """招待が作成された際のイベント"""
-        if target_channel := await self.bot.db.get_log_channel_id():  # サーバーで有効化されている場合
+        if target_channel := await self.bot.db.get_log_channel_id(invite.guild.id):  # サーバーで有効化されている場合
             if invite.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data.emoji.invite_add} Invite Created", color=0x00ff7f)
-                embed.description = f"Invite [{invite.code}]({invite.url}) has been created by <@{invite.inviter.id}>"
-                embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
-                embed.add_field(name="MaxUses / MaxAge", value=f"{self.parse_max_uses(invite.max_uses)} times | {self.parse_max_age(invite.max_age)}")
-                embed.add_field(name="Inviter", value=f"{invite.inviter}")
+                embed = discord.Embed(color=0x00ff7f)
+                embed.set_author(name="Invite Created", icon_url="https://cdn.discordapp.com/emojis/762303590365921280.png?v=1")
+                embed.description = f"Invite [{invite.code}]({invite.url}) has been created by <@{invite.inviter.id}>\n\n"
+                embed.description += f"`Channel  :`  <#{invite.channel.id}>\n"
+                embed.description += f"`Max Uses :`  {self.parse_max_uses(invite.max_uses)} times\n"
+                embed.description += f"`Max Age  :`  {self.parse_max_age(invite.max_age)}\n"
+                embed.description += f"`Invite   :`  {invite.inviter}"
                 await self.bot.get_channel(target_channel).send(embed=embed)
             else:  # 権限不足エラー
                 pass  # TODO: manage_guild不足通知
@@ -55,7 +57,7 @@ class Invite(commands.Cog):
     @commands.Cog.listener()
     async def on_invite_delete(self, invite: discord.Invite):
         """招待が削除された際のイベント"""
-        if target_channel := await self.bot.db.get_log_channel_id():  # サーバーで有効化されている場合
+        if target_channel := await self.bot.db.get_log_channel_id(invite.guild.id):  # サーバーで有効化されている場合
             if invite.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 inviter = None
                 if invite.code in self.bot.cache[invite.guild.id]:  # 招待キャッシュから、招待作成者を取得
@@ -63,11 +65,12 @@ class Invite(commands.Cog):
                 # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data.emoji_invite_del} Invite Deleted", color=0xff8c00)
-                embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@' + str(inviter) + '>' if inviter else 'Unknown'} has deleted or expired."
-                embed.add_field(name="Channel", value=f"<#{invite.channel.id}>")  # Object型になる可能性があるので
+                embed = discord.Embed(color=0xff8c00)
+                embed.set_author(name="Invite Deleted", icon_url="https://cdn.discordapp.com/emojis/762303590529892432.png?v=1")
+                embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@' + str(inviter) + '>' if inviter else 'Unknown'} has deleted or expired.\n\n"
+                embed.description += f"`Channel  :`  <#{invite.channel.id}>\n"
                 user = await self.catch_user(inviter)  # 招待者を取得
-                embed.add_field(name="Inviter", value=f"{user}")
+                embed.description += f"`Inviter  :`  {user}\n"
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 # Triggerに登録されたコードが削除されていないかどうか確認する
                 if invite.code in await self.bot.db.get_code_trigger_list():
@@ -80,13 +83,15 @@ class Invite(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """メンバーが参加した際のイベント"""
-        if target_channel := await self.bot.db.get_log_channel_id():  # サーバーで有効化されている場合
+        if target_channel := await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
             if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 old_invite_cache = self.bot.cache[member.guild.id]  # 前の招待キャッシュを取得
                 new_invite_cache = await self.bot.update_server_cache(member.guild)  # 後の招待キャッシュを取得
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)  # 差異から招待者を特定
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data.emoji.member_join} Member Joined", color=0x00ffff)
+                embed = discord.Embed(title=f"{self.bot.static_data.emoji_member_join} Member Joined", color=0x00ffff)
+                embed = discord.Embed(color=0x00ffff)
+                embed.set_author(name="Member Joined", icon_url="https://cdn.discordapp.com/emojis/762305608271265852.png?v=1")
                 embed.set_thumbnail(url=member.avatar_url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
@@ -95,22 +100,23 @@ class Invite(commands.Cog):
                     await self.bot.db.add_inviter_to_invited(member.guild.id, res[0], member.id)
                     inviter = await self.catch_user(res[0])  # 招待者を取得
                     # ログを送信
-                    embed.description = f"<@{member.id}> has joined through [{res[1]}](https://discord.gg/{res[1]}) made by <@{inviter.id}>"
-                    embed.add_field(name="User", value=f"{member}")
-                    embed.add_field(name="Invite", value=f"{res[1]} | {inviter}")
+                    embed.description = f"<@{member.id}> has joined through [{res[1]}](https://discord.gg/{res[1]}) made by <@{inviter.id}>\n\n"
+                    embed.description += f"`User    :`  {member}\n"
+                    embed.description += f"`Code    :`  {res[1]}\n"
+                    embed.description += f"`Inviter :`  {inviter}\n"
                 else:
-                    embed.description = f"<@{member.id}> has joined"
-                    embed.add_field(name="User", value=f"{member}")
-                    embed.add_field(name="Invite", value=f"Unknown")
+                    embed.description = f"<@{member.id}> has joined\n\n"
+                    embed.description += f"`User    :`  {member}\n"
+                    embed.description += f"`Inviter :`  Unknown\n"
                 # 参加者のアカウント作成日時を経過した時間で表示
                 embed.timestamp, delta = self.get_delta_time(member.created_at, with_warn=True)
                 # ログを送信
-                embed.add_field(name="Account Created", value=f"{delta} ago", inline=False)
+                embed.description += f"`Created :` {delta} ago"
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 # UserTriggerを確認
                 if member.guild.me.guild_permissions.manage_roles:  # ロール管理権限がある場合
-                    if res[0] in await self.bot.db.get_user_trigger_list():  # 招待者が設定されている場合
+                    if res[0] in await self.bot.db.get_user_trigger_list(member.guild.id):  # 招待者が設定されている場合
                         roles = await self.bot.db.get_user_trigger_roles(member.guild.id, res[0])
                         target_role = []
                         for role_id in roles:
@@ -151,27 +157,29 @@ class Invite(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         """メンバーが退出した際のイベント"""
-        if target_channel := await self.bot.db.get_log_channel_id():  # サーバーで有効化されている場合
+        if target_channel := await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
             if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 # ログを送信
-                embed = discord.Embed(title=f"{self.bot.static_data.emoji.member_leave} Member Left", color=0xff1493)
+                embed = discord.Embed(color=0xff1493)
+                embed.set_author(name="Member Left", icon_url="https://cdn.discordapp.com/emojis/762305607625605140.png?v=1")
                 embed.set_thumbnail(url=member.avatar_url)
                 # メンバーがデータベース上に存在しないか、招待元がNoneの場合
                 invite_from = await self.bot.db.get_user_invite_from(member.guild.id, member.id)
                 if await self.bot.db.is_registered_user(member.guild.id, member.id) or invite_from:
-                    embed.description = f"<@{member.id}> has left"
-                    embed.add_field(name="User", value=f"{member}")
-                    embed.add_field(name="Invite", value=f"Unknown")
+                    embed.description = f"<@{member.id}> has left\n\n"
+                    embed.description += f"`User    :`  {member}\n"
+                    embed.description += f"`Inviter :`  Unknown\n"
                 else:  # 招待者データがある場合
                     inviter_id = invite_from
                     invite_code = await self.bot.db.get_user_invite_code(member.guild.id, member.id)
                     inviter = await self.catch_user(inviter_id)
-                    embed.description = f"<@{member.id}> invited by <@{inviter.id}> has left"
-                    embed.add_field(name="User", value=f"{member}")
-                    embed.add_field(name="Invite", value=f"{invite_code} | {inviter}")
+                    embed.description = f"<@{member.id}> invited by {'<@'+inviter.id+'>' if inviter != 'Unknown' else 'Unknown'} has left\n\n"
+                    embed.description += f"`User    :`  {member}\n"
+                    embed.description += f"`Code    :`  {invite_code}\n"
+                    embed.description += f"`Inviter :`  {inviter}\n"
                 # 滞在した時間を何時間経過したかで表示
                 embed.timestamp, delta = self.get_delta_time(member.joined_at)
-                embed.add_field(name="Stayed Time", value=f"{delta}", inline=False)
+                embed.description += f"`Stayed  :`  {delta}"
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
                 await self.bot.get_channel(target_channel).send(embed=embed)
 
@@ -216,7 +224,7 @@ class Invite(commands.Cog):
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code triggers")
-            embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
+            embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.static_data.emoji_invite_add} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.static_data.emoji_invite_del} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
             count = 1
             for trigger_name in await self.bot.db.get_code_trigger_list(ctx.guild.id):
                 roles = await self.bot.db.get_code_trigger_roles(ctx.guild.id, trigger_name)
@@ -236,11 +244,11 @@ class Invite(commands.Cog):
         target_code = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", "", code)
         if target_code not in self.bot.cache[ctx.guild.id]:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Invalid code was specified.")
+            return await ctx.send(f"{self.bot.static_data.emoji_no_mag} Invalid code was specified.")
         target_role = self.get_roles_from_string(role, ctx.guild)
         if not target_role:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Role not found. Please make sure that role exists.")
+            return await ctx.send(f"{self.bot.static_data.emoji_no_mag} Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
         if target_code in await self.bot.db.get_code_trigger_list(ctx.guild.id):  # 既に設定されている場合は確認する
@@ -248,7 +256,7 @@ class Invite(commands.Cog):
             if not await self.bot.confirm(ctx):
                 return
         await self.bot.db.add_code_trigger(ctx.guild.id, target_code, target_role)
-        await ctx.send(f"{self.bot.static_data.emoji.invite_add} Code trigger has created successfully!")
+        await ctx.send(f"{self.bot.static_data.emoji_invite_add} Code trigger has created successfully!")
 
     @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Remove exist trigger.", alias=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -256,7 +264,7 @@ class Invite(commands.Cog):
         if index.isdigit() and 1 <= int(index) <= await self.bot.db.get_code_trigger_count(ctx.guild.id):
             key_list = await self.bot.db.get_code_trigger_list(ctx.guild.id)
             await self.bot.db.remove_code_trigger(ctx.guild.id, key_list[int(index) - 1])
-            await ctx.send(f"{self.bot.static_data.emoji.invite_del} Code trigger **{index}** has deleted successfully!")
+            await ctx.send(f"{self.bot.static_data.emoji_invite_del} Code trigger **{index}** has deleted successfully!")
         else:
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {await self.bot.db.get_code_trigger_count(ctx.guild.id)}.")
 
@@ -265,7 +273,7 @@ class Invite(commands.Cog):
     async def user_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers")
-            embed.description = f"If participant was invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji.invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji.invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
+            embed.description = f"If participant was invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji_invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji_invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
             count = 1
             for trigger_name in await self.bot.db.get_user_trigger_list(ctx.guild.id):
                 roles = await self.bot.db.get_user_trigger_roles(ctx.guild.id, trigger_name)
@@ -285,11 +293,11 @@ class Invite(commands.Cog):
         target_user = self.get_user_from_string(user, ctx.guild)
         if target_user is None:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} User not found. Please make sure that user exists.")
+            return await ctx.send(f"{self.bot.static_data.emoji_no_mag} User not found. Please make sure that user exists.")
         target_role = self.get_roles_from_string(role, ctx.guild)
         if not target_role:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} Role not found. Please make sure that role exists.")
+            return await ctx.send(f"{self.bot.static_data.emoji_no_mag} Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
         if target_user in await self.bot.db.get_user_trigger_roles(ctx.guild.id):  # 既に設定されている場合は確認する
@@ -297,7 +305,7 @@ class Invite(commands.Cog):
             if not await self.bot.confirm(ctx):
                 return
         await self.bot.db.add_user_trigger(ctx.guild.id, target_user, target_role)
-        await ctx.send(f"{self.bot.static_data.emoji.invite_add} User trigger has created successfully!")
+        await ctx.send(f"{self.bot.static_data.emoji_invite_add} User trigger has created successfully!")
 
     @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -305,7 +313,7 @@ class Invite(commands.Cog):
         if index.isdigit() and 1 <= int(index) <= len(await self.bot.db.get_user_trigger_count(ctx.guild.id)):
             key_list = await self.bot.db.get_user_trigger_list(ctx.guild.id)
             await self.bot.db.remove_user_trigger(ctx.guild.id, key_list[int(index) - 1])
-            await ctx.send(f"{self.bot.static_data.emoji.invite_del} User trigger **{index}** has deleted successfully!")
+            await ctx.send(f"{self.bot.static_data.emoji_invite_del} User trigger **{index}** has deleted successfully!")
         else:
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {await self.bot.db.get_user_trigger_count(ctx.guild.id)}.")
 
