@@ -111,14 +111,18 @@ def debugger(func):
 
     return wrapped
 
-async def error_embed_builder(ctx: commands.Context, text: str):
+async def error_embed_builder(sendable, text: str):
     embed = discord.Embed(description=f"<:xx:769783006302699548> {text}", color=discord.Color.red())
-    await ctx.send(embed=embed)
+    await sendable.send(embed=embed)
 
-async def success_embed_builder(ctx: commands.Context, text: str):
+async def success_embed_builder(sendable, text: str):
     embed = discord.Embed(description=f"<:oo:769783006029414440> {text}", color=discord.Color.green())
-    await ctx.send(embed=embed)
+    await sendable.send(embed=embed)
 
-async def warning_embed_builder(ctx: commands.Context, text: str):
+async def warning_embed_builder(sendable, text: str):
     embed = discord.Embed(description=f"<:warn:769783006071881728> {text}", color=0xf7b51c)
-    await ctx.send(embed=embed)
+    await sendable.send(embed=embed)
+
+async def normal_ember_builder(sendable, text: str):
+    embed = discord.Embed(description=f"{text}", color=discord.Color.blue())
+    await sendable.send(embed=embed)

@@ -1,4 +1,4 @@
-import asyncio
+import datetime
 import datetime
 import re
 
@@ -6,9 +6,9 @@ import discord
 import pytz
 from discord.ext import commands
 
-from main import InviteMonitor
 import identifier
-from identifier import error_embed_builder, success_embed_builder
+from main import InviteMonitor
+
 
 class Invite(commands.Cog):
     """Manage invites"""
@@ -175,7 +175,7 @@ class Invite(commands.Cog):
                     inviter_id = invite_from
                     invite_code = await self.bot.db.get_user_invite_code(member.guild.id, member.id)
                     inviter = await self.catch_user(inviter_id)
-                    embed.description = f"<@{member.id}> invited by {'<@'+inviter.id+'>' if inviter != 'Unknown' else 'Unknown'} has left\n\n"
+                    embed.description = f"<@{member.id}> invited by {'<@' + inviter.id + '>' if inviter != 'Unknown' else 'Unknown'} has left\n\n"
                     embed.description += f"`User    :`  {member}\n"
                     embed.description += f"`Code    :`  {invite_code}\n"
                     embed.description += f"`Inviter :`  {inviter}\n"

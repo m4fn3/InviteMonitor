@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from SQLManager import SQLManager
 from help import Help
 from static_data import StaticData
+from identifier import error_embed_builder, success_embed_builder, warning_embed_builder, normal_ember_builder
 
 # 環境変数の読み込み
 load_dotenv(verbose=True)
@@ -69,7 +70,7 @@ class InviteMonitor(commands.Bot):
     async def on_message(self, message):
         """メッセージを受け取った際のイベント"""
         if message.content == f"<@!{self.user.id}>":  # メンションされた場合、簡単な説明分を送信
-            return await message.channel.send(f"My prefix is **{self.PREFIX}**\nSee list of commands by `{self.PREFIX}help`")
+            await normal_ember_builder(message.channel, f"My prefix is **{self.PREFIX}**\nSee list of commands by `{self.PREFIX}help`")
         else:  # コマンドを処理
             await self.process_commands(message)
 
@@ -89,10 +90,10 @@ class InviteMonitor(commands.Bot):
         try:
             msg = await self.wait_for('message', check=check, timeout=30)
             if msg.content not in ["yes", "y", "'yes'", "ok"]:
-                await ctx.send(":negative_squared_cross_mark: Canceled!")
+                await success_embed_builder(ctx, "Canceled!")
                 return 0
         except asyncio.TimeoutError:
-            await ctx.send(":negative_squared_cross_mark: Canceled because of no reply.")
+            await error_embed_builder(ctx, "Canceled because of no reply.")
             return 0
         else:
             return 1
