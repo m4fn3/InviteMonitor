@@ -1,10 +1,12 @@
-from discord.ext import commands
-import discord, traceback2, re
-from main import InviteMonitor
+import re
 
+from discord.ext import commands
+
+from main import InviteMonitor
+import identifier
 
 class Manage(commands.Cog):
-    """__Manage members__"""
+    """Manage members"""
 
     def __init__(self, bot):
         self.bot = bot  # type: InviteMonitor
@@ -17,16 +19,10 @@ class Manage(commands.Cog):
         else:
             await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 
-    @commands.command(usage="kick [@user]", description="Kick the mentioned user and delete invites made by mentioned user")
+    @identifier.is_has_kick_members()
+    @commands.command(usage="kick [@user]", brief="Kick and wipe their invite", description="Kick the mentioned user and delete invites made by that user.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick(self, ctx):
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please mention at least one user!")
@@ -46,16 +42,10 @@ class Manage(commands.Cog):
         mentions_text = "<@" + "> <@".join(target_users) + ">"
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
-    @commands.command(usage="ban [@user]", description="Ban the mentioned user and delete invites made by mentioned user")
+    @identifier.is_has_ban_members()
+    @commands.command(usage="ban [@user]", brief="Ban and wipe their invite", description="Ban the mentioned user and delete invites made by that user.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban(self, ctx):
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
         if not ctx.message.mentions:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please mention at least one user!")
@@ -75,19 +65,13 @@ class Manage(commands.Cog):
         mentions_text = "<@" + "> <@".join(target_users) + ">"
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
 
-    @commands.command(usage="kick_with [@user | invite code]", description="Kick the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
+    @identifier.is_has_kick_members()
+    @commands.command(usage="kick_with [@user | invite code]", brief="Kick with inviter or code", description="Kick the members who was invited by specified user or invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick_with(self, ctx):
         # そのサーバーでログが設定されているか確認
-        if self.bot.db[str(ctx.guild.id)]["channel"] is None:
+        if not await self.bot.db.is_enabled_guild(ctx.guild.id):
             return await ctx.send(f":warning: Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__kick_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.kick_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__kick_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please specify at least one user or invite code!")
@@ -100,15 +84,15 @@ class Manage(commands.Cog):
         # 招待コードが有効であることを確認する,有効あらばリンクの作成者を対象者に追加
         target_invites = set()
         for invite in invites:
-            if invite not in self.bot.cache[str(ctx.guild.id)]:
+            if invite not in self.bot.cache[ctx.guild.id]:
                 error_msg += f":x: `{invite}` is invalid invite code.\n"
             else:
                 target_invites.add(invite)
-                target_users.add(self.bot.cache[str(ctx.guild.id)][invite]["author"])
+                target_users.add(self.bot.cache[ctx.guild.id][invite]["author"])
         # 指定されたユーザーに招待された人のIDのリストを作成
-        for user in self.bot.db[str(ctx.guild.id)]["users"]:
+        for user in await self.bot.db.get_guild_users(ctx.guild.id):
             # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
-            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in target_invites):
+            if (await self.bot.db.get_user_invite_from(ctx.guild.id, user) in mentions) or (await self.bot.db.get_user_invite_code(ctx.guild.id, user) in target_invites):
                 target_users.add(int(user))
         target_users = target_users.union(mentions)
         # Kickに成功した人のみのリストを作成
@@ -123,26 +107,20 @@ class Manage(commands.Cog):
         if error_msg != "":
             await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
-            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} No user found.")
+            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
         mentions_text = "<@" + "> <@".join(target_checked) + ">"
         await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
-    @commands.command(usage="ban_with [@user | code]", description="Ban the users who invited with mentioned user or specified invite code. Also delete invites made by them.")
+    @identifier.is_has_ban_members()
+    @commands.command(usage="ban_with [@user | code]", brief="Ban with inviter or code", description="Ban the members who was invited by specified user or invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def ban_with(self, ctx):
         # そのサーバーでログが設定されているか確認
-        if self.bot.db[str(ctx.guild.id)]["channel"] is None:
+        if not await self.bot.db.is_enabled_guild(ctx.guild.id):
             return await ctx.send(f":warning: Monitoring not enabled!. Please setup by `{self.bot.PREFIX}enable` command before using this feature.")
-        # 権限を確認
-        if not ctx.guild.me.guild_permissions.ban_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_entry_sign: Missing required permission **__ban_members__**!\nPlease make sure that BOT has right access.")
-        if not ctx.author.guild_permissions.ban_members:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":no_pedestrians: You don't have **__ban_members__** permisson!\nFor security reasons, this command can only be used by person who have permission.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(":warning: Please specify at least one user or invite code!")
@@ -155,15 +133,15 @@ class Manage(commands.Cog):
         # 招待コードが有効であることを確認する,有効あらばリンクの作成者を対象者に追加
         target_invites = set()
         for invite in invites:
-            if invite not in self.bot.cache[str(ctx.guild.id)]:
+            if invite not in self.bot.cache[ctx.guild.id]:
                 error_msg += f":x: `{invite}` is invalid invite code.\n"
             else:
                 target_invites.add(invite)
-                target_users.add(self.bot.cache[str(ctx.guild.id)][invite]["author"])
+                target_users.add(self.bot.cache[ctx.guild.id][invite]["author"])
         # 指定されたユーザーに招待された人のIDのリストを作成
-        for user in self.bot.db[str(ctx.guild.id)]["users"]:
+        for user in await self.bot.db.get_guild_users(ctx.guild.id):
             # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
-            if (self.bot.db[str(ctx.guild.id)]["users"][user]["from"] in mentions) or (self.bot.db[str(ctx.guild.id)]["users"][user]["code"] in target_invites):
+            if (await self.bot.db.get_user_invite_from(ctx.guild.id, user) in mentions) or (await self.bot.db.get_user_invite_code(ctx.guild.id, user) in target_invites):
                 target_users.add(int(user))
         target_users = target_users.union(mentions)
         # Kickに成功した人のみのリストを作成
@@ -178,7 +156,7 @@ class Manage(commands.Cog):
         if error_msg != "":
             await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
-            return await ctx.send(f"{self.bot.datas['emojis']['no_mag']} No user found.")
+            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()

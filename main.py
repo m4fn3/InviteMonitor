@@ -1,135 +1,101 @@
-from discord.ext import commands, tasks
-import discord, os, logging, pickle, time
-from dotenv import load_dotenv
-from help import Help
+import asyncio
+import logging
+import os
+import time
 
+import discord
+from discord.ext import commands
+from dotenv import load_dotenv
+
+from SQLManager import SQLManager
+from help import Help
+from static_data import StaticData
+
+# 環境変数の読み込み
 load_dotenv(verbose=True)
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
+# ログの設定
 logging.basicConfig(level=logging.INFO)
 
+# PREFIX
 PREFIX = "i/"
 PREFIXES = "i/"
+
 
 class InviteMonitor(commands.Bot):
     def __init__(self, command_prefix, help_command, intents, status, activity):
         super().__init__(command_prefix, help_command, intents=intents, status=status, activity=activity)
+        self.uptime = time.time()  # 起動時刻を取得
         self.PREFIX = PREFIX
-        self.datas = {
-            "invite": "https://discord.com/oauth2/authorize?client_id=761820118379921440&scope=bot&permissions=-8",
-            "server": "https://discord.gg/RbzSSrw",
-            "author": 513136168112750593,
-            "emojis": {
-                "loading": "<a:loading:762566694572916766>",
-                "invite_add": "<:invite_add:762303590365921280>",
-                "invite_del": "<:invite_del:762303590529892432>",
-                "member_join": "<:member_join:762305608271265852>",
-                "member_leave": "<:member_leave:762305607625605140>",
-                "no_mag": "<:no_mag:763683888236986388>"
-            }
-        }
-        with open("database.pkl", "rb") as db:
-            self.db = pickle.load(db)
-        self.cache = {}
-        # db = {
-        #     "server-id": {
-        #         "channel": None,
-        #         "users": {
-        #             "id": {
-        #                 "to": {},
-        #                 "to_all": {},
-        #                 "from": 113131,
-        #                 "code": "XyzABCopQ"
-        #             }
-        #         },
-        #         "roles": {
-        #             "user": {
-        #                 "id": "role_id"
-        #             },
-        #             "code": {
-        #                 "code": "role_id"
-        #             }
-        #         }
-        #     }
-        # }
         self.bot_cogs = ["developer", "invite", "setting", "manage", "cache"]
+
+        self.static_data = StaticData()
+
+        # データベース接続準備
+        self.db = SQLManager(os.getenv("DATABASE_URL"))
+        self.cache = {}  # 招待キャッシュ
+
         for cog in self.bot_cogs:
-            self.load_extension(cog)
-        self.uptime = time.time()
+            self.load_extension(cog)  # Cogの読み込み
 
     async def on_ready(self):
+        """キャッシュの準備ができた際のイベント"""
         print(f"Logged in to [{self.user}]")
-        # 既に開始していなければデータベース自動保存を有効にする
-        if not self.save_database.is_running():
-            self.save_database.start()
-        # データベース内にないサーバーの情報を補完
-        prepare_list = [guild.id for guild in self.guilds if str(guild.id) not in self.db]
-        for guild_id in prepare_list:
-            self.register_server_data(guild_id)
-        # 全サーバーの招待コード&使用済回数情報を取得
-        await self.update_all_server_cache(self.guilds)
+        if not self.db.is_connected():  # データベースに接続しているか確認
+            await self.db.connect()  # データベースに接続
+        # 全てのサーバーの招待情報のキャッシュを更新
+        for guild_id in await self.db.get_enabled_guild_ids():  # 有効化されているサーバーを取得
+            guild = self.get_guild(guild_id)
+            if guild is None:  # BOTのダウンタイム中にサーバーを退出した場合
+                await self.db.disable_guild(guild_id)
+            else:
+                await self.update_server_cache(guild)
+        # 起動後のBOTステータスを設定
         await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
-    async def on_guild_join(self, guild):
-        if self.check_permission(guild.me):
-            await self.update_server_cache(guild)
-        self.register_server_data(guild.id)
+    async def on_guild_join(self, guild: discord.guild):
+        """BOT自身がサーバーに参加した際のイベント"""
+        # サーバー情報をデータベースに新規登録
+        await self.db.register_new_guild(guild.id)
 
     async def on_guild_remove(self, guild):
-        self.clear_server(guild.id)
+        """BOT自身がサーバーを退出した際のイベント"""
+        # 招待キャッシュを削除
+        await self.db.disable_guild(guild.id)
+        if guild.id in self.cache:
+            del self.cache[guild.id]
 
     async def on_message(self, message):
-        if message.content == f"<@!{self.user.id}>":
+        """メッセージを受け取った際のイベント"""
+        if message.content == f"<@!{self.user.id}>":  # メンションされた場合、簡単な説明分を送信
             return await message.channel.send(f"My prefix is **{self.PREFIX}**\nSee list of commands by `{self.PREFIX}help`")
-        else:
+        else:  # コマンドを処理
             await self.process_commands(message)
 
-    def register_server_data(self, guild_id):
-        # データベースにサーバー情報を追加
-        self.db[str(guild_id)] = {
-            "channel": None,
-            "users": {},
-            "roles": {
-                "code": {},
-                "user": {}
-            }
-        }
+    async def update_server_cache(self, guild: discord.guild):
+        """サーバーの招待キャッシュを更新"""
+        invites = {invite.code: {"uses": invite.uses, "author": invite.inviter.id} for invite in await guild.invites()}
+        self.cache[guild.id] = invites
+        return invites
 
-    def clear_server(self, guild_id):
-        # データベース,キャッシュからサーバーのデータを削除
-        del self.db[str(guild_id)]
-        del self.cache[str(guild_id)]
+    async def confirm(self, ctx):
+        """本当に実行するかの確認"""
+        def check(m):
+            return m.channel.id == ctx.channel.id and m.author.id == ctx.author.id
 
-    async def update_server_cache(self, guild):
-        # サーバーの招待情報のキャッシュを更新
-        invites = await guild.invites()
-        invite_dict = {}
-        for invite in invites:
-            invite_dict[invite.code] = {
-                "uses": invite.uses,
-                "author": invite.inviter.id
-            }
-        self.cache[str(guild.id)] = invite_dict
-        return invite_dict
-
-    async def update_all_server_cache(self, guilds):
-        # 全てのサーバーの招待情報のキャッシュを更新
-        for guild in guilds:
-            if self.db[str(guild.id)]["channel"] is not None:
-                await self.update_server_cache(guild)
-
-    def check_permission(self, member):
-        if member.guild_permissions.manage_guild:
-            return 1
-        else:
+        try:
+            msg = await self.wait_for('message', check=check, timeout=30)
+            if msg.content not in ["yes", "y", "'yes'", "ok"]:
+                await ctx.send(":negative_squared_cross_mark: Canceled!")
+                return 0
+        except asyncio.TimeoutError:
+            await ctx.send(":negative_squared_cross_mark: Canceled because of no reply.")
             return 0
-
-    @tasks.loop(minutes=1)
-    async def save_database(self):
-        with open("database.pkl", "wb") as f:
-            pickle.dump(self.db, f)
+        else:
+            return 1
 
 if __name__ == '__main__':
-    intents = discord.Intents.all()
-    bot = InviteMonitor(command_prefix=commands.when_mentioned_or(PREFIXES), help_command=Help(), intents=intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
-    bot.run(os.getenv("TOKEN"))
+    bot_intents = discord.Intents.all()  # 全てのインテントを有効化
+    bot = InviteMonitor(command_prefix=commands.when_mentioned_or(PREFIXES), help_command=Help(), intents=bot_intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
+    bot.run(os.getenv("TOKEN"))  # BOTを起動
