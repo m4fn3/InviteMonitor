@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from main import InviteMonitor
 import identifier
+from identifier import error_embed_builder, success_embed_builder, warning_embed_builder
 
 class Cache(commands.Cog):
     """Clear cached data"""
@@ -27,10 +28,7 @@ class Cache(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_invites(self, ctx):
         if not ctx.message.mentions:  # 全員分
-            embed = discord.Embed(title=":warning: ARE YOU REALLY WANT TO DELETE ALL INVITES?", color=0xff0000)
-            embed.description = "*Type 'yes' to continue*"
-            embed.add_field(name="Following data will be deleted:", value="・All invites of the server")
-            await ctx.send(embed=embed)
+            await warning_embed_builder(ctx, "Are you really want to delete all invites?\n\nFollowing data will be deleted:\n・All server invites", "Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
             await ctx.send(f"{self.bot.static_data.emoji.loading} It may takes several time if the server is large..")
@@ -50,10 +48,7 @@ class Cache(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_cache(self, ctx):
         if not ctx.message.mentions:  # 全員分
-            embed = discord.Embed(title=":warning: ARE YOU REALLY WANT TO DELETE ALL CACHES?", color=0xff0000)
-            embed.description = "*Type 'yes' to continue*"
-            embed.add_field(name="Following data will be deleted:", value="・Invite counts of all user")
-            await ctx.send(embed=embed)
+            await warning_embed_builder(ctx, "Are you really want to delete all caches?\n\nFollowing data will be deleted:\n・Invite counts of all user", "Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
             await ctx.send(f"{self.bot.static_data.emoji.loading} It may takes several time if the server is large..")

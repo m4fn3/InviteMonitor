@@ -8,7 +8,7 @@ from discord.ext import commands
 
 import identifier
 from main import InviteMonitor
-
+from identifier import error_embed_builder, success_embed_builder, warning_embed_builder
 
 class Invite(commands.Cog):
     """Manage invites"""
@@ -253,7 +253,7 @@ class Invite(commands.Cog):
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
         if target_code in await self.bot.db.get_code_trigger_list(ctx.guild.id):  # 既に設定されている場合は確認する
-            await ctx.send(f":warning: Invite code **{code}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
+            await warning_embed_builder(ctx, f"Invite code **{code}** is already configured.\nDo you want to override previous setting?", title="Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
         await self.bot.db.add_code_trigger(ctx.guild.id, target_code, target_role)
@@ -302,7 +302,7 @@ class Invite(commands.Cog):
         elif len(target_role) > 5:
             return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
         if target_user in await self.bot.db.get_user_trigger_roles(ctx.guild.id):  # 既に設定されている場合は確認する
-            await ctx.send(f":warning: User **{user}** is already configured.\n**DO YOU WANT TO OVERRIDE PREVIOUS SETTING?**\nType 'yes' to continue.")
+            await warning_embed_builder(ctx, f"User **{user}** is already configured.\nDo you want to override previous setting?", title="Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
         await self.bot.db.add_user_trigger(ctx.guild.id, target_user, target_role)
