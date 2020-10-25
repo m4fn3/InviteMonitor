@@ -4,6 +4,7 @@ import dataclasses
 @dataclasses.dataclass(frozen=True)
 class StaticData:
     invite = "https://discord.com/oauth2/authorize?client_id=761820118379921440&scope=bot&permissions=-8"
+    author = 513136168112750593
     server = "https://discord.gg/RbzSSrw"
     emoji_loading = "<a:loading:762566694572916766>"
     emoji_invite_add = "<:invite_add:762303590365921280>"

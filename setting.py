@@ -93,12 +93,7 @@ class Setting(commands.Cog):
     @commands.command(aliases=["info"], usage="about", brief="About the bot", description="Show the information about the bot.")
     async def about(self, ctx):
         embed = discord.Embed(title=f"About {self.bot.user.name}", color=0xffe4b5)
-        embed.description = f"""**Thank you for using {self.bot.user.name}!**
-> InvStat is strong server invites monitoring bot that allows you to
-> ・ know inviter of participant
-> ・ counts people invited by a particular user
-> ・ kick users who invited by specified troll user
-> It protects your server from malicious users and manage private server invitations for security! 🔐"""
+        embed.description = f"""**Thank you for using {self.bot.user.name}!**\nInviteMonitor is strong server monitoring bot that allows you to protects your server from malicious users and keep safety!"""
         embed.add_field(name="Discord", value=f"```Server Count: {len(self.bot.guilds)}\nUser Count: {len(self.bot.users)}\nLatency: {self.bot.latency:.2f}[s]```")
         td = datetime.timedelta(seconds=int(time.time() - self.bot.uptime))
         m, s = divmod(td.seconds, 60)
