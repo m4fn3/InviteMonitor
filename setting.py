@@ -5,8 +5,9 @@ import discord
 from discord.ext import commands
 
 import identifier
+from identifier import error_embed_builder, success_embed_builder, warning_embed_builder
 from main import InviteMonitor
-from identifier import error_embed_builder, success_embed_builder, warning_embed_builder, normal_ember_builder
+
 
 class Setting(commands.Cog):
     """SetUp the bot"""
