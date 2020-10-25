@@ -10,7 +10,7 @@ def is_author_has_manage_guild():
 
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_guild:
-            embed = discord.Embed(title="Missing Permission", description="You don't have __manage_guild__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Missing Permission", description="<:xx:769783006302699548> You don't have __manage_guild__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         else:
@@ -24,11 +24,11 @@ def is_has_manage_guild():
 
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_guild:
-            embed = discord.Embed(title="Missing Permission", description="You don't have __manage_guild__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Missing Permission", description="<:xx:769783006302699548> You don't have __manage_guild__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         elif not ctx.guild.me.guild_permissions.manage_guild:
-            embed = discord.Embed(title="Permission denied", description="I don't have __manage_guild__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Permission denied", description="<:xx:769783006302699548> I don't have __manage_guild__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         else:
@@ -42,11 +42,11 @@ def is_has_kick_members():
 
     async def predicate(ctx):
         if not ctx.author.guild_permissions.kick_members:
-            embed = discord.Embed(title="Missing Permission", description="You don't have __kick_members__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Missing Permission", description="<:xx:769783006302699548> You don't have __kick_members__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         elif not ctx.guild.me.guild_permissions.kick_members:
-            embed = discord.Embed(title="Permission denied", description="I don't have __kick_members__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Permission denied", description="<:xx:769783006302699548> I don't have __kick_members__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         else:
@@ -60,11 +60,11 @@ def is_has_ban_members():
 
     async def predicate(ctx):
         if not ctx.author.guild_permissions.ban_members:
-            embed = discord.Embed(title="Missing Permission", description="You don't have __ban_members__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Missing Permission", description="<:xx:769783006302699548> You don't have __ban_members__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         elif not ctx.guild.me.guild_permissions.ban_members:
-            embed = discord.Embed(title="Permission denied", description="I don't have __ban_members__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Permission denied", description="<:xx:769783006302699548> I don't have __ban_members__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         else:
@@ -78,11 +78,11 @@ def is_has_manage_roles():
 
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_roles:
-            embed = discord.Embed(title="Missing Permission", description="You don't have __manage_roles__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Missing Permission", description="<:xx:769783006302699548> You don't have __manage_roles__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         elif not ctx.guild.me.guild_permissions.manage_roles:
-            embed = discord.Embed(title="Permission denied", description="I don't have __manage_roles__ permission!", color=discord.Color.red())
+            embed = discord.Embed(title="Permission denied", description="<:xx:769783006302699548> I don't have __manage_roles__ permission!", color=discord.Color.red())
             await ctx.send(embed=embed)
             return False
         else:
@@ -110,3 +110,15 @@ def debugger(func):
             await self.bot.get_channel(664376321278738453).send(f'{error_msg}')
 
     return wrapped
+
+async def error_embed_builder(ctx: commands.Context, text: str):
+    embed = discord.Embed(description=f"<:xx:769783006302699548> {text}", color=discord.Color.red())
+    await ctx.send(embed=embed)
+
+async def success_embed_builder(ctx: commands.Context, text: str):
+    embed = discord.Embed(description=f"<:oo:769783006029414440> {text}", color=discord.Color.green())
+    await ctx.send(embed=embed)
+
+async def warning_embed_builder(ctx: commands.Context, text: str):
+    embed = discord.Embed(description=f"<:warn:769783006071881728> {text}", color=0xf7b51c)
+    await ctx.send(embed=embed)

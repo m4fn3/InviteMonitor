@@ -28,10 +28,11 @@ class SQLManager:
 
     async def is_enabled_guild(self, guild_id: int) -> bool:
         """特定のサーバーでモニターが有効になっているかどうかを確認"""
-        # SELECT count(*) FROM server // そのような行の数を数えるidはprimary keyなので有効であるならば1,無効ならば0
-        # WHERE channel is not null and id = $1 // channelがnullでない(=有効であり)かつidがguild_idであるものに適用
-        res = await self.con.fetchrow("SELECT count(*) FROM server WHERE channel is not null and id = $1;", guild_id)
-        return bool(res)  # 0,1を真偽値に変換
+        res = await self.con.fetchrow("SELECT channel FROM server WHERE id = $1;", guild_id)
+        if res is None or res["channel"] is None:
+            return False
+        else:
+            return True
 
     async def enable_guild(self, guild_id: int, channel_id: int) -> None:
         """有効にする"""
@@ -161,14 +162,14 @@ class SQLManager:
 
     async def add_invited_to_inviter(self, guild_id: int, inviter: int, invited: int) -> None:
         """招待履歴を招待者のデータに追加"""
-        if await self.is_registered_user(guild_id, inviter):
+        if not await self.is_registered_user(guild_id, inviter):
             await self.register_new_user(guild_id, inviter)
         # UPDATE server SET users = jsonb_insert(users, '{%d, to, 0}', $1) // users[inviter][to]にある配列にinvitedを追加
         await self.con.execute("UPDATE server SET users = jsonb_insert(users, '{%d, to, 0}', $1)" % inviter, str(invited))
 
     async def add_inviter_to_invited(self, guild_id: int, inviter: int, invited: int) -> None:
         """招待元ユーザーデータを招待された人のデータに追加"""
-        if await self.is_registered_user(guild_id, invited):
+        if not await self.is_registered_user(guild_id, invited):
             await self.register_new_user(guild_id, invited)
         # UPDATE server SET users = jsonb_set(users, '{%d, from}, $1')) // users[invited][from]にinvitedを代入
         await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, from}', $1)" % invited, str(inviter))

@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from main import InviteMonitor
 import identifier
+from identifier import error_embed_builder, success_embed_builder
 
 class Invite(commands.Cog):
     """Manage invites"""
@@ -81,6 +82,7 @@ class Invite(commands.Cog):
                 pass  # TODO: manage_guild不足通知
 
     @commands.Cog.listener()
+    @identifier.debugger
     async def on_member_join(self, member: discord.Member):
         """メンバーが参加した際のイベント"""
         if target_channel := await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
