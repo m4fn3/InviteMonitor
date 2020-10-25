@@ -93,15 +93,15 @@ class Setting(commands.Cog):
     @commands.command(aliases=["info"], usage="about", brief="About the bot", description="Show the information about the bot.")
     async def about(self, ctx):
         embed = discord.Embed(title=f"About {self.bot.user.name}", color=0xffe4b5)
-        embed.description = f"""**Thank you for using {self.bot.user.name}!**\nInviteMonitor is strong server monitoring bot that allows you to protects your server from malicious users and keep safety!"""
-        embed.add_field(name="Discord", value=f"```Server Count: {len(self.bot.guilds)}\nUser Count: {len(self.bot.users)}\nLatency: {self.bot.latency:.2f}[s]```")
+        embed.description = f"**Thank you for using {self.bot.user.name}!**\n{self.bot.user.name} is strong server monitoring bot that allows you to protects your server from malicious users and keep safety!\n\n"
+        embed.description += f"`Servers :`  {len(self.bot.guilds)}\n`Users   :`  {len(self.bot.users)}\n"
         td = datetime.timedelta(seconds=int(time.time() - self.bot.uptime))
         m, s = divmod(td.seconds, 60)
         h, m = divmod(m, 60)
         d = td.days
-        embed.add_field(name="Uptime", value=f"{d}d {h}h {m}m {s}s", inline=False)
-        embed.add_field(name="URL 📎", value=f"[InviteBOT]({self.bot.static_data.invite}) | [OfficialServer]({self.bot.static_data.server})", inline=False)
-        embed.set_footer(text=f"{self.bot.user.name} is powered by {self.bot.get_user(self.bot.static_data.author)} with discord.py", icon_url="http://zorba.starfree.jp/mafu.jpg")
+        embed.description += f"`Uptime  :`  {d}d {h}h {m}m {s}s"
+        embed.add_field(name="links📎", value=f"[InviteMe]({self.bot.static_data.invite}) | [SupportServer]({self.bot.static_data.server}) | [VoteMe]({self.bot.static_data.top_gg}) | [Donation]({self.bot.static_data.donate})", inline=False)
+        embed.set_footer(text=f"Powered by {self.bot.get_user(self.bot.static_data.author)} with discord.py", icon_url="https://cdn.discordapp.com/emojis/769855038964891688.png")
         await ctx.send(embed=embed)
 
 
