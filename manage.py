@@ -19,7 +19,7 @@ class Manage(commands.Cog):
         elif isinstance(error, commands.CheckFailure):
             pass
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
     @identifier.is_has_kick_members()
     @commands.command(usage="kick [@user]", brief="Kick and wipe their invite", description="Kick the mentioned user and delete invites made by that user.")

@@ -24,7 +24,7 @@ class Invite(commands.Cog):
         elif isinstance(error, commands.CheckFailure):
             pass
         else:  # 予期しないエラー
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
     async def catch_user(self, user_id: int):
         """効率よくユーザーデータを取得する"""
@@ -193,7 +193,6 @@ class Invite(commands.Cog):
         """
         for invite in old_invites:
             if invite in new_invites:
-                # NOTE: 修正したので正常に動くことを確認する必要がある
                 if old_invites[invite]["uses"] != new_invites[invite]["uses"]:  # 使用回数が変わっている場合
                     return [old_invites[invite]["author"], invite]
             else:

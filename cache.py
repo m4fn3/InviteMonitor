@@ -20,7 +20,7 @@ class Cache(commands.Cog):
         elif isinstance(error, commands.CheckFailure):
             pass
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
     @identifier.is_has_manage_guild()
     @commands.command(aliases=["clear_invite"], brief="Clear invites", usage="clear_invites (@user)", description="Delete invites made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")

@@ -22,7 +22,7 @@ class Setting(commands.Cog):
         elif isinstance(error, commands.CheckFailure):
             pass
         else:
-            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
+            await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
     @identifier.is_has_manage_guild()
     @commands.command(usage="enable (#channel)", brief="Start monitoring", description="Start monitor invites and report logs to specified channel. If no channel provided, set to channel command executed.")
