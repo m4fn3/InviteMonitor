@@ -21,8 +21,8 @@ class Invite(commands.Cog):
             await ctx.send(f":hourglass_flowing_sand: Interval too fast!\nYou can use this command again __**after {error.retry_after:.2f} sec!**__")
         elif isinstance(error, commands.MissingRequiredArgument):  # 引数不足
             await ctx.send(":placard: Missing required arguments!")
-        elif isinstance(error, Exception):  # コード内で明示的に発生させているエラーを無視
-            pass  # 親コマンドが呼び出されたタイミングでraiseすることで、その後のサブコマンドの処理を止めることができる
+        elif isinstance(error, commands.CheckFailure):
+            pass
         else:  # 予期しないエラー
             await ctx.send(f":tools: Unexpected error has occurred. please contact to bot developer.\n```py{str(error)[:1900]}```")
 

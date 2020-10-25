@@ -1,11 +1,13 @@
 from discord.ext import commands
+import discord
 
 
 def is_author_has_manage_guild():
     """サーバーの管理 権限を実行者が持っているか判定"""
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_guild:
-            await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who has permission.")
+            embed = discord.Embed(title="Missing Permission", description="You don't have __manage_guild__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         else:
             return True
@@ -15,10 +17,12 @@ def is_has_manage_guild():
     """サーバーの管理 権限をBOTと実行者が持っているか判定"""
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_guild:
-            await ctx.send(":no_pedestrians: You don't have **__manage_guild__** permission!\nFor security reasons, this command can only be used by person who has permission.")
+            embed = discord.Embed(title="Missing Permission", description="You don't have __manage_guild__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         elif not ctx.guild.me.guild_permissions.manage_guild:
-            await ctx.send(":no_entry_sign: BOT doesn't have **__manage_guild__** permission!")
+            embed = discord.Embed(title="Permission denied", description="I don't have __manage_guild__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         else:
             return True
@@ -28,10 +32,12 @@ def is_has_kick_members():
     """メンバーをキック 権限をBOTと実行者が持っているか判定"""
     async def predicate(ctx):
         if not ctx.author.guild_permissions.kick_members:
-            await ctx.send(":no_pedestrians: You don't have **__kick_guild__** permission!\nFor security reasons, this command can only be used by person who has permission.")
+            embed = discord.Embed(title="Missing Permission", description="You don't have __kick_members__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         elif not ctx.guild.me.guild_permissions.kick_members:
-            await ctx.send(":no_entry_sign: BOT doesn't have **__kick_guild__** permission!")
+            embed = discord.Embed(title="Permission denied", description="I don't have __kick_members__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         else:
             return True
@@ -41,10 +47,12 @@ def is_has_ban_members():
     """メンバーをBAN 権限をBOTと実行者が持っているか判定"""
     async def predicate(ctx):
         if not ctx.author.guild_permissions.ban_members:
-            await ctx.send(":no_pedestrians: You don't have **__ban_members__** permission!\nFor security reasons, this command can only be used by person who has permission.")
+            embed = discord.Embed(title="Missing Permission", description="You don't have __ban_members__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         elif not ctx.guild.me.guild_permissions.ban_members:
-            await ctx.send(":no_entry_sign: BOT doesn't have **__ban_members__** permission!")
+            embed = discord.Embed(title="Permission denied", description="I don't have __ban_members__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         else:
             return True
@@ -54,10 +62,12 @@ def is_has_manage_roles():
     """役職の管理 権限をBOTと実行者が持っているか判定"""
     async def predicate(ctx):
         if not ctx.author.guild_permissions.manage_roles:
-            await ctx.send(":no_pedestrians: You don't have **__manage_roles__** permission!\nFor security reasons, this command can only be used by person who has permission.")
+            embed = discord.Embed(title="Missing Permission", description="You don't have __manage_roles__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         elif not ctx.guild.me.guild_permissions.manage_roles:
-            await ctx.send(":no_entry_sign: BOT doesn't have **__manage_roles__** permission!")
+            embed = discord.Embed(title="Permission denied", description="I don't have __manage_roles__ permission!", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return False
         else:
             return True
