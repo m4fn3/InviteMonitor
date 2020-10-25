@@ -171,8 +171,22 @@ class SQLManager:
         """招待元ユーザーデータを招待された人のデータに追加"""
         if not await self.is_registered_user(guild_id, invited):
             await self.register_new_user(guild_id, invited)
-        # UPDATE server SET users = jsonb_set(users, '{%d, from}, $1')) // users[invited][from]にinvitedを代入
-        await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, from}', $1)" % invited, str(inviter))
+        # UPDATE server SET users = jsonb_set(users, '{%d, from}, $1)) // users[invited][from]にinvitedを代入
+        try:
+            await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, from}', $1)" % invited, str(inviter))
+        except:
+            print(traceback2.format_exc())
+
+    async def add_code_to_invited(self, guild_id: int, code: str, invited: int) -> None:
+        """使用した招待コードを招待された人のデータに追加"""
+        if not await self.is_registered_user(guild_id, invited):
+            await self.register_new_user(guild_id, invited)
+        # UPDATE server SET users = jsonb_set(users, '{%d, from}, $1)) // users[invited][code]にinvitedを代入
+        # 文字列を代入したい場合,'"string"'の形式にする必要があるため%で代入
+        try:
+            await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, code}', '\"%s\"')" % (invited, code))
+        except:
+            print(traceback2.format_exc())
 
     async def register_new_user(self, guild_id: int, user_id: int) -> None:
         """新規ユーザーデータを追加"""
@@ -198,16 +212,16 @@ class SQLManager:
         if res is None or res["f"] is None:
             return None
         else:
-            return res["f"]
+            return int(res["f"])
 
     async def get_user_invite_code(self, guild_id: int, user_id: int) -> Optional[str]:
         """特定ユーザーの参加時の招待コードを取得"""
         # SELECT users#>'{%d, code}' AS f FROM server WHERE id = $1 // [users][user_id][code]にある値を取得
         res = await self.con.fetchrow("SELECT users#>'{%d, code}' AS f FROM server WHERE id = $1;" % user_id, guild_id)
-        if res is None or res["f"] is None:
+        if res is None or res["f"] is None or res["f"] == "null":
             return None
-        else:
-            return res["f"]
+        else:  # "CodeTEsT" -> CodeTEsT
+            return res["f"].strip('"')  # 普通のテキストとして取得するので,でコードされないので,手動でデコードする
 
     async def is_registered_user(self, guild_id: int, user_id: int) -> bool:
         """ユーザーがサーバーのユーザーリストに登録されているか確認"""

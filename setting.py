@@ -82,6 +82,8 @@ class Setting(commands.Cog):
                     embed.description += f"`Inviter    :`  {inviter}\n"
                 else:
                     embed.description += f"`Inviter    :`  Unknown\n"
+                if used_code := await self.bot.db.get_user_invite_code(ctx.guild.id, target_user.id):
+                    embed.description += f"`Used Code  :`  {used_code}\n"
             else:
                 embed.description += f"`InviteCount:`  0\n"
                 embed.description += f"`Inviter    :`  Unknown\n"

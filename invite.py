@@ -99,6 +99,7 @@ class Invite(commands.Cog):
                     await self.bot.db.add_invited_to_inviter(member.guild.id, res[0], member.id)
                     # 招待された人の招待作成者を記録
                     await self.bot.db.add_inviter_to_invited(member.guild.id, res[0], member.id)
+                    await self.bot.db.add_code_to_invited(member.guild.id, res[1], member.id)
                     inviter = await self.catch_user(res[0])  # 招待者を取得
                     # ログを送信
                     embed.description = f"<@{member.id}> has joined through [{res[1]}](https://discord.gg/{res[1]}) made by <@{inviter.id}>\n\n"
