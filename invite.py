@@ -254,24 +254,24 @@ class Invite(commands.Cog):
         # 数を確認
         if await self.bot.db.get_code_trigger_count(ctx.guild.id) == 5:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":x: You already have 5 triggers! Please delete trigger before make new one.")
+            return await error_embed_builder(ctx, "You already have 5 triggers! Please delete trigger before make new one.")
         # 招待コードを取得
         target_code = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", "", code)
         if target_code not in self.bot.cache[ctx.guild.id]:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data.emoji_no_mag} Invalid code was specified.")
+            return await error_embed_builder(ctx, "Unavailable invite code!")
         target_role = self.get_roles_from_string(role, ctx.guild)
         if not target_role:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data.emoji_no_mag} Role not found. Please make sure that role exists.")
+            return await error_embed_builder(ctx, "Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
-            return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
+            return await error_embed_builder("Too many roles! You can satisfy roles up to 5.")
         if target_code in await self.bot.db.get_code_trigger_list(ctx.guild.id):  # 既に設定されている場合は確認する
             await warning_embed_builder(ctx, f"Invite code **{code}** is already configured.\nDo you want to override previous setting?", title="Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
         await self.bot.db.add_code_trigger(ctx.guild.id, target_code, target_role)
-        await ctx.send(f"{self.bot.static_data.emoji_invite_add} Code trigger has created successfully!")
+        await success_embed_builder(ctx, "Code trigger has created successfully!")
 
     @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Remove exist trigger.", aliases=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -308,24 +308,24 @@ class Invite(commands.Cog):
         # 数を確認
         if len(await self.bot.db.get_user_trigger_count(ctx.guild.id)) == 5:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":x: You already have 5 triggers! Please delete trigger before make new one.")
+            return await error_embed_builder(ctx, "You already have 5 triggers! Please delete trigger before make new one.")
         # ユーザーを取得
         target_user = self.get_user_from_string(user, ctx.guild)
         if target_user is None:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data.emoji_no_mag} User not found. Please make sure that user exists.")
+            return await error_embed_builder(ctx, "Unavailable user!")
         target_role = self.get_roles_from_string(role, ctx.guild)
         if not target_role:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(f"{self.bot.static_data.emoji_no_mag} Role not found. Please make sure that role exists.")
+            return await error_embed_builder(ctx, "Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
-            return await ctx.send(":x: Too many roles! You can satisfy roles up to 5.")
+            return await error_embed_builder("Too many roles! You can satisfy roles up to 5.")
         if target_user in await self.bot.db.get_user_trigger_roles(ctx.guild.id):  # 既に設定されている場合は確認する
             await warning_embed_builder(ctx, f"User **{user}** is already configured.\nDo you want to override previous setting?", title="Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
         await self.bot.db.add_user_trigger(ctx.guild.id, target_user, target_role)
-        await ctx.send(f"{self.bot.static_data.emoji_invite_add} User trigger has created successfully!")
+        await success_embed_builder(ctx, "User trigger has created successfully!")
 
     @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", aliases=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)

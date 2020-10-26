@@ -172,10 +172,7 @@ class SQLManager:
         if not await self.is_registered_user(guild_id, invited):
             await self.register_new_user(guild_id, invited)
         # UPDATE server SET users = jsonb_set(users, '{%d, from}, $1)) // users[invited][from]にinvitedを代入
-        try:
-            await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, from}', $1)" % invited, str(inviter))
-        except:
-            print(traceback2.format_exc())
+        await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, from}', $1)" % invited, str(inviter))
 
     async def add_code_to_invited(self, guild_id: int, code: str, invited: int) -> None:
         """使用した招待コードを招待された人のデータに追加"""
@@ -183,10 +180,7 @@ class SQLManager:
             await self.register_new_user(guild_id, invited)
         # UPDATE server SET users = jsonb_set(users, '{%d, from}, $1)) // users[invited][code]にinvitedを代入
         # 文字列を代入したい場合,'"string"'の形式にする必要があるため%で代入
-        try:
-            await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, code}', '\"%s\"')" % (invited, code))
-        except:
-            print(traceback2.format_exc())
+        await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, code}', '\"%s\"')" % (invited, code))
 
     async def register_new_user(self, guild_id: int, user_id: int) -> None:
         """新規ユーザーデータを追加"""
