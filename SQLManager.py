@@ -209,7 +209,7 @@ class SQLManager:
         """特定ユーザーの招待元ユーザーIDを取得"""
         # SELECT users#>'{%d, from}' AS f FROM server WHERE id = $1 // [users][user_id][from]にある値を取得
         res = await self.con.fetchrow("SELECT users#>'{%d, from}' AS f FROM server WHERE id = $1;" % user_id, guild_id)
-        if res is None or res["f"] is None:
+        if res is None or res["f"] is None or res["f"] == "null":
             return None
         else:
             return int(res["f"])

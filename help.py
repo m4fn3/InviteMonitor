@@ -7,7 +7,7 @@ import identifier
 class Help(commands.HelpCommand):
     def __init__(self):
         super().__init__()
-        self.description_text = "\n[Need help? Visit the support server!]({})"
+        self.description_text = "\n[Need help? Visit the Support Server!]({})"
         self.footer_text = "{}help [command]  to learn more!"
 
     async def send_bot_help(self, mapping) -> None:
@@ -32,6 +32,10 @@ class Help(commands.HelpCommand):
         while True:
             try:
                 reaction, user = await self.context.bot.wait_for("reaction_add", timeout=60, check=check)
+                try:
+                    await message.remove_reaction(reaction, user)
+                except:
+                    pass
                 if str(reaction.emoji) == "▶️":  # 次のページに進む
                     if page == len(cogs) + 1:
                         page = 1

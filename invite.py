@@ -43,7 +43,7 @@ class Invite(commands.Cog):
                 # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
-                embed = discord.Embed(color=0x00ff7f)
+                embed = discord.Embed(color=0xa8ffa8)
                 embed.set_author(name="Invite Created", icon_url="https://cdn.discordapp.com/emojis/762303590365921280.png?v=1")
                 embed.description = f"Invite [{invite.code}]({invite.url}) has been created by <@{invite.inviter.id}>\n\n"
                 embed.description += f"`Channel  :`  <#{invite.channel.id}>\n"
@@ -65,7 +65,7 @@ class Invite(commands.Cog):
                 # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
-                embed = discord.Embed(color=0xff8c00)
+                embed = discord.Embed(color=0xffbf7f)
                 embed.set_author(name="Invite Deleted", icon_url="https://cdn.discordapp.com/emojis/762303590529892432.png?v=1")
                 embed.description = f"Invite [{invite.code}]({invite.url}) by {'<@' + str(inviter) + '>' if inviter else 'Unknown'} has deleted or expired.\n\n"
                 embed.description += f"`Channel  :`  <#{invite.channel.id}>\n"
@@ -73,7 +73,7 @@ class Invite(commands.Cog):
                 embed.description += f"`Inviter  :`  {user}\n"
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 # Triggerに登録されたコードが削除されていないかどうか確認する
-                if invite.code in await self.bot.db.get_code_trigger_list():
+                if invite.code in await self.bot.db.get_code_trigger_list(invite.guild.id):
                     # 通知文を送信
                     await self.bot.get_channel(target_channel).send(f":warning: Invite `{invite.code}` was deleted, so this trigger is no longer available!")
                     await self.bot.db.remove_code_trigger(invite.guild.id, invite.code)  # 削除する
@@ -89,7 +89,7 @@ class Invite(commands.Cog):
                 new_invite_cache = await self.bot.update_server_cache(member.guild)  # 後の招待キャッシュを取得
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)  # 差異から招待者を特定
                 # ログを送信
-                embed = discord.Embed(color=0x00ffff)
+                embed = discord.Embed(color=0xa8d3ff)
                 embed.set_author(name="Member Joined", icon_url="https://cdn.discordapp.com/emojis/762305608271265852.png")
                 embed.set_thumbnail(url=member.avatar_url)
                 if res is not None:  # ユーザーが判別できた場合
@@ -162,7 +162,7 @@ class Invite(commands.Cog):
         if target_channel := await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
             if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 # ログを送信
-                embed = discord.Embed(color=0xff1493)
+                embed = discord.Embed(color=0xffa8a8)
                 embed.set_author(name="Member Left", icon_url="https://cdn.discordapp.com/emojis/762305607625605140.png")
                 embed.set_thumbnail(url=member.avatar_url)
                 # メンバーがデータベース上に存在しないか、招待元がNoneの場合
@@ -205,7 +205,8 @@ class Invite(commands.Cog):
     @commands.command(aliases=["inv"], usage="invite (@bot)", brief="Get bot's invite link", description="Show invite link of the bot. If some bot mentioned, send invite link of those.")
     async def invite(self, ctx):
         if not ctx.message.mentions:  # メンションがない場合、このBOTの招待リンクを表示
-            embed = discord.Embed(title="Invite links", color=0xffa07a)
+            embed = discord.Embed(title="Invite links", color=0xffa8ff)
+            embed.description = "Here are some links. If you need help, please feel free to ask in Support Server. Thanks!"
             embed.set_thumbnail(url=self.bot.user.avatar_url)
             embed.add_field(name="Invite URL", value=self.bot.static_data.invite, inline=False)
             embed.add_field(name="Support Server", value=self.bot.static_data.server, inline=False)
@@ -213,7 +214,7 @@ class Invite(commands.Cog):
             embed.set_footer(text="Thank you for using InviteMonitor!", icon_url="https://cdn.discordapp.com/emojis/769855038964891688.png")
             await ctx.send(embed=embed)
         else:  # メンションがある場合、メンションされたBOTの招待リンクを表示
-            embed = discord.Embed(title="Invite links", color=0xffa07a)
+            embed = discord.Embed(title="Invite links", color=0xff7fff)
             count = 0
             for target_user in ctx.message.mentions:
                 if count == 10:
@@ -231,12 +232,11 @@ class Invite(commands.Cog):
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code Triggers")  # NOTE: 確認
-            embed.description = "If someone join through [code], give [role]\n`[index] : [code]`\n[@role]"
+            embed.description = "If someone join through [code], give [@role]\n`[index] : [code]`\n`[@role]`"
             count = 1
             for trigger_name in await self.bot.db.get_code_trigger_list(ctx.guild.id):
                 roles = await self.bot.db.get_code_trigger_roles(ctx.guild.id, trigger_name)
-                print(ctx.guild.get_role(roles[0]).id)
-                embed.add_field(name=f"`{count}       :`  {trigger_name}", value=" ".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
+                embed.add_field(name=f"`{count}       :`  {trigger_name}", value=" ".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]), inline=False)
                 count += 1
             embed.set_footer(text=f"Total {count - 1} code triggers in {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)

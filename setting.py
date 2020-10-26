@@ -56,7 +56,7 @@ class Setting(commands.Cog):
             return await warning_embed_builder(ctx, f"Not enabled yet. Please setup by `{self.bot.PREFIX}enable` before checking status.")
         if not ctx.message.mentions:
             # 設定を取得
-            embed = discord.Embed(color=0x9932cc)
+            embed = discord.Embed(color=0xd3a8ff)
             embed.set_author(name=f"{ctx.guild.name}", icon_url=ctx.guild.icon_url)
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.description = f"Cached status of the server **{ctx.guild.name}**\n\n"
@@ -68,7 +68,7 @@ class Setting(commands.Cog):
             await ctx.send(embed=embed)
         else:
             target_user = ctx.message.mentions[0]
-            embed = discord.Embed(color=0xffff00)
+            embed = discord.Embed(color=0xd3a8ff)
             embed.set_author(name=f"{str(target_user)}", icon_url=target_user.avatar_url)
             embed.set_thumbnail(url=target_user.avatar_url)
             embed.description = f"Cached data of <@{target_user.id}>\n\n"
@@ -93,7 +93,7 @@ class Setting(commands.Cog):
 
     @commands.command(aliases=["info"], usage="about", brief="About the bot", description="Show the information about the bot.")
     async def about(self, ctx):
-        embed = discord.Embed(title=f"About {self.bot.user.name}", color=0xffe4b5)
+        embed = discord.Embed(title=f"About {self.bot.user.name}", color=0xffffa8)
         embed.description = f"**Thank you for using {self.bot.user.name}!**\n{self.bot.user.name} is strong server monitoring bot that allows you to protects your server from malicious users and keep safety!\n\n"
         embed.description += f"`Servers :`  {len(self.bot.guilds)}\n`Users   :`  {len(self.bot.users)}\n"
         td = datetime.timedelta(seconds=int(time.time() - self.bot.uptime))
