@@ -81,7 +81,6 @@ class Invite(commands.Cog):
                 pass  # TODO: manage_guild不足通知
 
     @commands.Cog.listener()
-    @identifier.debugger
     async def on_member_join(self, member: discord.Member):
         """メンバーが参加した際のイベント"""
         if target_channel := await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
@@ -91,7 +90,7 @@ class Invite(commands.Cog):
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)  # 差異から招待者を特定
                 # ログを送信
                 embed = discord.Embed(color=0x00ffff)
-                embed.set_author(name="Member Joined", icon_url="https://cdn.discordapp.com/emojis/762305608271265852.png?v=1")
+                embed.set_author(name="Member Joined", icon_url="https://cdn.discordapp.com/emojis/762305608271265852.png")
                 embed.set_thumbnail(url=member.avatar_url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
@@ -116,7 +115,9 @@ class Invite(commands.Cog):
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
                 await self.bot.get_channel(target_channel).send(embed=embed)
                 # UserTriggerを確認
-                if member.guild.me.guild_permissions.manage_roles:  # ロール管理権限がある場合
+                if res is None:  # 招待を認識できなかった場合
+                    return
+                elif member.guild.me.guild_permissions.manage_roles:  # ロール管理権限がある場合
                     if res[0] in await self.bot.db.get_user_trigger_list(member.guild.id):  # 招待者が設定されている場合
                         roles = await self.bot.db.get_user_trigger_roles(member.guild.id, res[0])
                         target_role = []
@@ -162,7 +163,7 @@ class Invite(commands.Cog):
             if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 # ログを送信
                 embed = discord.Embed(color=0xff1493)
-                embed.set_author(name="Member Left", icon_url="https://cdn.discordapp.com/emojis/762305607625605140.png?v=1")
+                embed.set_author(name="Member Left", icon_url="https://cdn.discordapp.com/emojis/762305607625605140.png")
                 embed.set_thumbnail(url=member.avatar_url)
                 # メンバーがデータベース上に存在しないか、招待元がNoneの場合
                 invite_from = await self.bot.db.get_user_invite_from(member.guild.id, member.id)
@@ -204,33 +205,38 @@ class Invite(commands.Cog):
     @commands.command(aliases=["inv"], usage="invite (@bot)", brief="Get bot's invite link", description="Show invite link of the bot. If some bot mentioned, send invite link of those.")
     async def invite(self, ctx):
         if not ctx.message.mentions:  # メンションがない場合、このBOTの招待リンクを表示
-            await ctx.send(f"__**Add {self.bot.user.name}!**__\n{self.bot.static_data.invite}\n__**Join Official Server!**__\n{self.bot.static_data.server}")
-        else:  # メンションがある場合、メンションされたBOTの招待リンクを表示
-            invite_text = ""
+            embed = discord.Embed(title="Invite links", color=0xffa07a)
+            embed.set_thumbnail(url=self.bot.user.avatar_url)
+            embed.add_field(name="Invite URL", value=self.bot.static_data.invite, inline=False)
+            embed.add_field(name="Support Server", value=self.bot.static_data.server, inline=False)
+            embed.add_field(name="Additional links", value=f"[Vote me on top.gg]({self.bot.static_data.top_gg}) | [Donate to keep online]({self.bot.static_data.donate})")
+            embed.set_footer(text="Thank you for using InviteMonitor!", icon_url="https://cdn.discordapp.com/emojis/769855038964891688.png")
+            await ctx.send(embed=embed)
+        else:  # メンションがある場合、メンションされたBOTの招待リンクを表示  # NOTE: 動作確認
+            embed = discord.Embed(title="Invite links", color=0xffa07a)
+            count = 0
             for target_user in ctx.message.mentions:
-                if target_user.bot:
-                    new_invite_text = f"__**{str(target_user)} 's invite link**__\nhttps://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8\n"
-                else:  # BOT出ない場合
-                    new_invite_text = f"{target_user} is not the bot!\n"
-                if len(invite_text + new_invite_text) > 1900:  # 1900文字を超える場合、エラー文を追加して中断
-                    invite_text += "(Some invites have been omitted due to message length limit)"
+                if count == 10:
                     break
-                else:  # 問題ない場合、末尾に追加
-                    invite_text += new_invite_text
-            await ctx.send(invite_text)
+                if target_user.bot:
+                    embed.add_field(name=str(target_user), value=f"https://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8")
+                else:  # BOTでない場合
+                    embed.add_field(name=str(target_user), value=f"{target_user} is not the bot!")
+                count += 1
+            await ctx.send(embed=embed)
 
     @identifier.is_has_manage_roles()
     @commands.group(usage="code_trigger", brief="Auto role with used code", description="Manage triggers that give specific role to participant who joined with specific invite code.")
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
-            embed = discord.Embed(title="Code triggers")
-            embed.description = f"If user joined through Invite **Code**, then give the **role**\ntrigger index | trigger name\nTo add/delete code trigger:\n> {self.bot.static_data.emoji_invite_add} {self.bot.PREFIX}{self.bot.get_command('code_trigger add').usage}\n> {self.bot.static_data.emoji_invite_del} {self.bot.PREFIX}{self.bot.get_command('code_trigger remove').usage}"
+            embed = discord.Embed(title="Code Triggers")  # NOTE: 確認
+            embed.description = "If someone join through [code], give [role]\n[index] | [code]"
             count = 1
             for trigger_name in await self.bot.db.get_code_trigger_list(ctx.guild.id):
                 roles = await self.bot.db.get_code_trigger_roles(ctx.guild.id, trigger_name)
-                embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
+                embed.add_field(name=f"{count} | {trigger_name}", value=" ".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
                 count += 1
-            embed.set_footer(text=f"Total {count - 1} code triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
+            embed.set_footer(text=f"Total {count - 1} code triggers in {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
     @code_trigger.command(name="add", usage="user_trigger add [invite code] [@role]", description="Add new trigger. (If participant joined with [invite code], then give [@role])")
