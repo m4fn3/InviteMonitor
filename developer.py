@@ -41,12 +41,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         # remove `foo`
         return content.strip('` \n')
 
-    @commands.group(aliases=["sys"])
-    async def system(self, ctx):
-        if ctx.invoked_subcommand is None:
-            await ctx.send("reload <Cog> | restart | quit")
-
-    @system.command(aliases=["rl"])
+    @commands.command(aliases=["rl"])
     async def reload(self, ctx, text):
         if text in self.bot.bot_cogs:
             try:
@@ -58,7 +53,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         else:
             await ctx.send("存在しない名前です.")
 
-    @system.command(aliases=["l"])
+    @commands.command()
     async def load(self, ctx, text):
         if text in self.bot.bot_cogs:
             try:
@@ -70,7 +65,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         else:
             await ctx.send("存在しない名前です.")
 
-    @system.command(aliases=["u"])
+    @commands.command()
     async def unload(self, ctx, text):
         if text in self.bot.bot_cogs:
             try:
@@ -82,13 +77,13 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         else:
             await ctx.send("存在しない名前です.")
 
-    @system.command(aliases=["re"])
+    @commands.command()
     async def restart(self, ctx):
         await ctx.send(":closed_lock_with_key:BOTを再起動します.")
         python = sys.executable
         os.execl(python, python, *sys.argv)
 
-    @system.command(aliases=["q"])
+    @commands.command()
     async def quit(self, ctx):
         await ctx.send(":closed_lock_with_key:BOTを停止します.")
         sys.exit()

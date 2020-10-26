@@ -231,7 +231,7 @@ class Invite(commands.Cog):
     @identifier.debugger
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
-            embed = discord.Embed(title="Code Triggers")  # NOTE: 確認
+            embed = discord.Embed(title="Code Triggers")
             embed.description = "If someone join through [code], give [@role]\n`[index] : [code]`\n`[@role]`"
             count = 1
             for trigger_name in await self.bot.db.get_code_trigger_list(ctx.guild.id):
@@ -277,16 +277,18 @@ class Invite(commands.Cog):
             await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {await self.bot.db.get_code_trigger_count(ctx.guild.id)}.")
 
     @identifier.is_has_manage_roles()
-    @commands.group(usage="user_trigger", brief="Auto role with inviter", description="Manage triggers that give specific roles to participant who invited by specific user.")
+    @commands.group(usage="user_trigger", aliases=["ut"], brief="Auto role with inviter", description="Manage triggers that give specific roles to participant who invited by specific user.")
     async def user_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers")
-            embed.description = f"If participant was invited by **user**, then give the **role**\ntrigger index | trigger name\nTo add/delete user trigger:\n> {self.bot.static_data.emoji_invite_add} {self.bot.PREFIX}{self.bot.get_command('user_trigger add').usage}\n> {self.bot.static_data.emoji_invite_del} {self.bot.PREFIX}{self.bot.get_command('user_trigger remove').usage}"
+            embed.description = f"If someone was invited by [user], give [@role]\n`[index] : [user]`\n`[@role]`"
             count = 1
             for trigger_name in await self.bot.db.get_user_trigger_list(ctx.guild.id):
                 roles = await self.bot.db.get_user_trigger_roles(ctx.guild.id, trigger_name)
-                embed.add_field(name=f"{count} | {trigger_name}", value=",".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
+                embed.add_field(name=f"`{count}       :`  {trigger_name}", value=" ".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
                 count += 1
+            if count == 1:
+                embed.description += f"\n\n**No triggers here! To get started:**\n{self.bot.PREFIX}user_trigger add [user] [roles]\n**For example:**\n{self.bot.PREFIX}user_trigger add {self.bot.user.mention} {ctx.guild.roles[-1].mention if ctx.guild.roles else '@new_role'}\n\n{self.bot.PREFIX}help user_trigger to learn more."
             embed.set_footer(text=f"Total {count - 1} user triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
