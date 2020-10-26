@@ -1,11 +1,7 @@
-import asyncio
-
-import discord
 from discord.ext import commands
 
 from main import InviteMonitor
-import identifier
-from identifier import error_embed_builder, success_embed_builder, warning_embed_builder
+
 
 class Cache(commands.Cog):
     """Clear cached data"""

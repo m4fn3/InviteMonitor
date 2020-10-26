@@ -141,6 +141,6 @@ Others
     def subcommand_not_found(self, cmd, string):
         if isinstance(cmd, commands.Group) and len(cmd.all_commands) > 0:
             return f"Subcommand **{string}** is not registered to **{cmd.qualified_name}** command!\nPlease check correct usage by `{self.context.bot.PREFIX}help {cmd.qualified_name}`"
-        return f"**{cmd.qualified_name}** command doesn't have subcommand!\nPlease check correct usage by `{self.context.bot.PREFIX}help {cmd.qualified_name}`"
+        return f"**{cmd.qualified_name}** command does not have subcommand!\nPlease check correct usage by `{self.context.bot.PREFIX}help {cmd.qualified_name}`"
 
 

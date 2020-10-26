@@ -1,7 +1,7 @@
-import asyncpg
 import json
 from typing import Optional
-import traceback2
+
+import asyncpg
 
 
 class SQLManager:
