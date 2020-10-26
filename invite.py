@@ -238,6 +238,8 @@ class Invite(commands.Cog):
                 roles = await self.bot.db.get_code_trigger_roles(ctx.guild.id, trigger_name)
                 embed.add_field(name=f"`{count}       :`  {trigger_name}", value=" ".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]), inline=False)
                 count += 1
+            if count == 1:
+                embed.description += f"\n\n**No triggers here! To get started:**\n{self.bot.PREFIX}code_trigger add [code] [roles]\n**For example:**\n{self.bot.PREFIX}code_trigger add {self.bot.cache[ctx.guild.id].keys()[0] if self.bot.cache[ctx.guild.id].keys() else 'RbzSSrw'} {ctx.guild.roles[-1].mention if ctx.guild.roles else '@new_role'}\n\n{self.bot.PREFIX}help code_trigger to learn more."
             embed.set_footer(text=f"Total {count - 1} code triggers in {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
@@ -266,9 +268,10 @@ class Invite(commands.Cog):
         await self.bot.db.add_code_trigger(ctx.guild.id, target_code, target_role)
         await ctx.send(f"{self.bot.static_data.emoji_invite_add} Code trigger has created successfully!")
 
-    @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Remove exist trigger.", alias=["delete", "del"])
+    @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Remove exist trigger.", aliases=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def code_trigger_remove(self, ctx, index):
+        print( await self.bot.db.get_code_trigger_count(ctx.guild.id))
         if index.isdigit() and 1 <= int(index) <= await self.bot.db.get_code_trigger_count(ctx.guild.id):
             key_list = await self.bot.db.get_code_trigger_list(ctx.guild.id)
             await self.bot.db.remove_code_trigger(ctx.guild.id, key_list[int(index) - 1])
@@ -317,7 +320,7 @@ class Invite(commands.Cog):
         await self.bot.db.add_user_trigger(ctx.guild.id, target_user, target_role)
         await ctx.send(f"{self.bot.static_data.emoji_invite_add} User trigger has created successfully!")
 
-    @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", alias=["delete", "del"])
+    @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", aliases=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger_remove(self, ctx, index):
         if index.isdigit() and 1 <= int(index) <= len(await self.bot.db.get_user_trigger_count(ctx.guild.id)):
