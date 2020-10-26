@@ -6,7 +6,7 @@ import pytz
 from discord.ext import commands
 
 import identifier
-from identifier import error_embed_builder, warning_embed_builder
+from identifier import error_embed_builder, warning_embed_builder, success_embed_builder, normal_ember_builder
 from main import InviteMonitor
 
 
@@ -239,7 +239,12 @@ class Invite(commands.Cog):
                 embed.add_field(name=f"`{count}       :`  {trigger_name}", value=" ".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]), inline=False)
                 count += 1
             if count == 1:
-                embed.description += f"\n\n**No triggers here! To get started:**\n{self.bot.PREFIX}code_trigger add [code] [roles]\n**For example:**\n{self.bot.PREFIX}code_trigger add {self.bot.cache[ctx.guild.id].keys()[0] if self.bot.cache[ctx.guild.id].keys() else 'RbzSSrw'} {ctx.guild.roles[-1].mention if ctx.guild.roles else '@new_role'}\n\n{self.bot.PREFIX}help code_trigger to learn more."
+                ex_invite: str
+                if ctx.guild.id in self.bot.cache and self.bot.cache[ctx.guild.id]:
+                    ex_invite = list(self.bot.cache[ctx.guild.id].keys())[0]
+                else:
+                    ex_invite = "RbzSSrw"
+                embed.description += f"\n\n**No triggers here! To get started:**\n{self.bot.PREFIX}code_trigger add [code] [roles]\n**For example:**\n{self.bot.PREFIX}code_trigger add {ex_invite} {ctx.guild.roles[-1].mention if ctx.guild.roles else '@new_role'}\n\n{self.bot.PREFIX}help code_trigger to learn more."
             embed.set_footer(text=f"Total {count - 1} code triggers in {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
 
@@ -271,13 +276,15 @@ class Invite(commands.Cog):
     @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Remove exist trigger.", aliases=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def code_trigger_remove(self, ctx, index):
-        print( await self.bot.db.get_code_trigger_count(ctx.guild.id))
-        if index.isdigit() and 1 <= int(index) <= await self.bot.db.get_code_trigger_count(ctx.guild.id):
+        count = await self.bot.db.get_code_trigger_count(ctx.guild.id)
+        if count == 0:
+            await error_embed_builder(ctx, "No code triggers here yet.")
+        elif index.isdigit() and 1 <= int(index) <= count:
             key_list = await self.bot.db.get_code_trigger_list(ctx.guild.id)
             await self.bot.db.remove_code_trigger(ctx.guild.id, key_list[int(index) - 1])
-            await ctx.send(f"{self.bot.static_data.emoji_invite_del} Code trigger **{index}** has deleted successfully!")
+            await success_embed_builder(ctx, f"Code trigger **{index}** has deleted successfully!")
         else:
-            await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {await self.bot.db.get_code_trigger_count(ctx.guild.id)}.")
+            await error_embed_builder(ctx, f"Invalid index!\nIndexes are found on `{self.bot.PREFIX}code_trigger`")
 
     @identifier.is_has_manage_roles()
     @commands.group(usage="user_trigger", aliases=["ut"], brief="Auto role with inviter", description="Manage triggers that give specific roles to participant who invited by specific user.")
@@ -323,12 +330,15 @@ class Invite(commands.Cog):
     @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", aliases=["delete", "del"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger_remove(self, ctx, index):
-        if index.isdigit() and 1 <= int(index) <= len(await self.bot.db.get_user_trigger_count(ctx.guild.id)):
+        count = await self.bot.db.get_user_trigger_count(ctx.guild.id)
+        if count == 0:
+            await error_embed_builder(ctx, "No user triggers here yet.")
+        elif index.isdigit() and 1 <= int(index) <= count:
             key_list = await self.bot.db.get_user_trigger_list(ctx.guild.id)
             await self.bot.db.remove_user_trigger(ctx.guild.id, key_list[int(index) - 1])
-            await ctx.send(f"{self.bot.static_data.emoji_invite_del} User trigger **{index}** has deleted successfully!")
+            await success_embed_builder(ctx, f"User trigger **{index}** has deleted successfully!")
         else:
-            await ctx.send(f":warning: Invalid index! Please specify with integer between 1 and {await self.bot.db.get_user_trigger_count(ctx.guild.id)}.")
+            await error_embed_builder(ctx, f"Invalid index!\nIndexes are found on `{self.bot.PREFIX}user_trigger`")
 
     def get_user_from_string(self, user_string, guild):
         target_user: str

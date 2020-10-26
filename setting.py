@@ -36,6 +36,7 @@ class Setting(commands.Cog):
             target_channel = ctx.message.channel_mentions[0]
         # チャンネルデータを保存
         await self.bot.db.enable_guild(ctx.guild.id, target_channel.id)
+        await self.bot.update_server_cache(ctx.guild)  # 招待キャッシュを作成
         await success_embed_builder(ctx, f"Log channel has been set to {target_channel.mention} successfully!\nNow started to monitor invites and report logs.")
 
     @identifier.is_has_manage_guild()
@@ -47,6 +48,7 @@ class Setting(commands.Cog):
         else:
             await self.bot.db.disable_guild(ctx.guild.id)
             await success_embed_builder(ctx, f"Stopped monitoring and reporting information.\nYou can resume with `{self.bot.PREFIX}enable` at any time!")
+            del self.bot.cache[ctx.guild.id]  # 招待キャッシュの削除
 
     @commands.command(aliases=["st"], brief="See cached status", usage="status (@user)", description="Show user's data includes inviter and invite counts. If no user mentioned, server status will be shown.")
     @identifier.debugger
