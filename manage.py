@@ -3,7 +3,7 @@ import re
 from discord.ext import commands
 
 import identifier
-from identifier import error_embed_builder
+from identifier import error_embed_builder, success_embed_builder
 from main import InviteMonitor
 
 
@@ -28,14 +28,14 @@ class Manage(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick(self, ctx):
         if not ctx.message.mentions:
-            ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":warning: Please mention at least one user!")
+            ctx.command.reset_cooldown(ctx)  # TODO: メンション以外の対応
+            return await error_embed_builder(ctx, "Please mention at least one user!")
         target_users = set()
         for target in ctx.message.mentions:
             try:
                 await ctx.guild.get_member(target.id).kick()
-            except:
-                await ctx.send(f":x: Failed to kick user <@{target.id}>")
+            except:  # TODO: 大量にいる場合の対策
+                await error_embed_builder(ctx, f"Failed to kick user <@{target.id}>")
             else:
                 target_users.add(str(target.id))
         if not target_users:
@@ -44,7 +44,7 @@ class Manage(commands.Cog):
             if str(invite.inviter.id) in target_users:
                 await invite.delete()
         mentions_text = "<@" + "> <@".join(target_users) + ">"
-        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
+        await success_embed_builder(ctx, f"{mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
     @identifier.is_has_ban_members()
     @commands.command(usage="ban [@user]", brief="Ban and wipe their invite", description="Ban the mentioned user and delete invites made by that user.")
@@ -52,13 +52,13 @@ class Manage(commands.Cog):
     async def ban(self, ctx):
         if not ctx.message.mentions:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":warning: Please mention at least one user!")
+            return await error_embed_builder(ctx, "Please mention at least one user!")
         target_users = set()
         for target in ctx.message.mentions:
             try:
                 await ctx.guild.get_member(target.id).ban()
             except:
-                await ctx.send(f":x: Failed to ban user <@{target.id}>")
+                await error_embed_builder(ctx, f"Failed to kick user <@{target.id}>")
             else:
                 target_users.add(str(target.id))
         if not target_users:
@@ -67,7 +67,7 @@ class Manage(commands.Cog):
             if str(invite.inviter.id) in target_users:
                 await invite.delete()
         mentions_text = "<@" + "> <@".join(target_users) + ">"
-        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
+        await success_embed_builder(ctx, f"{mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
 
     @identifier.is_has_kick_members()
     @commands.command(usage="kick_with [@user | invite code]", brief="Kick with inviter or code", description="Kick the members who was invited by specified user or invite code. Also delete invites made by them.")
@@ -75,10 +75,10 @@ class Manage(commands.Cog):
     async def kick_with(self, ctx):
         # そのサーバーでログが設定されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
-            return await ctx.send(f":warning: Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
+            return await error_embed_builder(ctx, "Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":warning: Please specify at least one user or invite code!")
+            return await error_embed_builder(ctx, "Please specify at least one user or invite code!")
         mentions = {user.id for user in ctx.message.mentions}
         clean_text = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", " ", ctx.message.content.split(" ", 1)[1])
         clean_text = re.sub(r"<@!?\d+>", " ", clean_text)
@@ -109,14 +109,14 @@ class Manage(commands.Cog):
             else:
                 target_checked.add(str(target))
         if error_msg != "":
-            await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
+            await error_embed_builder(ctx, error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
-            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} No user found.")
+            return await error_embed_builder(ctx, f"No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
         mentions_text = "<@" + "> <@".join(target_checked) + ">"
-        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
+        await success_embed_builder(ctx, f"{mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
 
     @identifier.is_has_ban_members()
     @commands.command(usage="ban_with [@user | code]", brief="Ban with inviter or code", description="Ban the members who was invited by specified user or invite code. Also delete invites made by them.")
@@ -124,10 +124,10 @@ class Manage(commands.Cog):
     async def ban_with(self, ctx):
         # そのサーバーでログが設定されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
-            return await ctx.send(f":warning: Monitoring not enabled!. Please setup by `{self.bot.PREFIX}enable` command before using this feature.")
+            return await error_embed_builder(ctx, "Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
-            return await ctx.send(":warning: Please specify at least one user or invite code!")
+            return await error_embed_builder(ctx, "Please specify at least one user or invite code!")
         mentions = {user.id for user in ctx.message.mentions}
         clean_text = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", " ", ctx.message.content.split(" ", 1)[1])
         clean_text = re.sub(r"<@!?\d+>", " ", clean_text)
@@ -158,14 +158,14 @@ class Manage(commands.Cog):
             else:
                 target_checked.add(str(target))
         if error_msg != "":
-            await ctx.send(error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
+            await error_embed_builder(ctx, error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
         if not target_checked:
-            return await ctx.send(f"{self.bot.static_data.emoji.no_mag} No user found.")
+            return await error_embed_builder(ctx, "No user found.")
         for invite in await ctx.guild.invites():
             if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
                 await invite.delete()
         mentions_text = "<@" + "> <@".join(target_checked) + ">"
-        await ctx.send(f":magic_wand: {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
+        await success_embed_builder(ctx, f"{mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
 
 
 def setup(bot):
