@@ -227,7 +227,7 @@ class Invite(commands.Cog):
             await ctx.send(embed=embed)
 
     @identifier.is_has_manage_roles()
-    @commands.group(usage="code_trigger", brief="Auto role with used code", description="Manage triggers that give specific role to participant who joined with specific invite code.")
+    @commands.group(usage="code_trigger", aliases=["ct"], brief="Auto role with used code", description="Manage triggers that give specific role to participant who joined with specific invite code.")
     @identifier.debugger
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
