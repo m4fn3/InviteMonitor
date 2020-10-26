@@ -103,10 +103,10 @@ class SQLManager:
     async def get_code_trigger_roles(self, guild_id: int, code: str) -> list:
         """招待コードトリガーに設定されている役職のリストを取得"""
         res = await self.con.fetchrow("SELECT code_trigger->>$1 AS f FROM server WHERE id = $2;", code, guild_id)
-        if res is None or res["f"] is None:
+        if res is None or res["f"] is None or res["f"] == "null":
             return []
         else:
-            return res["f"]
+            return json.loads(res["f"])  # 文字列で返って来るので手動で変換
 
     async def add_code_trigger(self, guild_id: int, code: str, roles: list) -> None:
         # UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2 # [code_trigger][code] = roles
@@ -144,10 +144,10 @@ class SQLManager:
     async def get_user_trigger_roles(self, guild_id: int, user_id: int) -> list:
         """ユーザートリガーに設定されている役職のリストを取得"""
         res = await self.con.fetchrow("SELECT user_trigger->>$1 AS f FROM server WHERE id = $2;", str(user_id), guild_id)
-        if res is None or res["f"] is None:
+        if res is None or res["f"] is None or res["f"] == "null":
             return []
         else:
-            return res["f"]
+            return json.loads(res["f"])  # 文字列で返って来るので手動で変換
 
     async def add_user_trigger(self, guild_id: int, user_id: int, roles: list) -> None:
         # UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2 # [user_trigger][user_id] = roles

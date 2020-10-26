@@ -212,29 +212,31 @@ class Invite(commands.Cog):
             embed.add_field(name="Additional links", value=f"[Vote me on top.gg]({self.bot.static_data.top_gg}) | [Donate to keep online]({self.bot.static_data.donate})")
             embed.set_footer(text="Thank you for using InviteMonitor!", icon_url="https://cdn.discordapp.com/emojis/769855038964891688.png")
             await ctx.send(embed=embed)
-        else:  # メンションがある場合、メンションされたBOTの招待リンクを表示  # NOTE: 動作確認
+        else:  # メンションがある場合、メンションされたBOTの招待リンクを表示
             embed = discord.Embed(title="Invite links", color=0xffa07a)
             count = 0
             for target_user in ctx.message.mentions:
                 if count == 10:
                     break
                 if target_user.bot:
-                    embed.add_field(name=str(target_user), value=f"https://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8")
+                    embed.add_field(name=str(target_user), value=f"https://discord.com/oauth2/authorize?client_id={target_user.id}&scope=bot&permissions=-8", inline=False)
                 else:  # BOTでない場合
-                    embed.add_field(name=str(target_user), value=f"{target_user} is not the bot!")
+                    embed.add_field(name=str(target_user), value=f"{target_user} is not the bot!", inline=False)
                 count += 1
             await ctx.send(embed=embed)
 
     @identifier.is_has_manage_roles()
     @commands.group(usage="code_trigger", brief="Auto role with used code", description="Manage triggers that give specific role to participant who joined with specific invite code.")
+    @identifier.debugger
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code Triggers")  # NOTE: 確認
-            embed.description = "If someone join through [code], give [role]\n[index] | [code]"
+            embed.description = "If someone join through [code], give [role]\n`[index] : [code]`\n[@role]"
             count = 1
             for trigger_name in await self.bot.db.get_code_trigger_list(ctx.guild.id):
                 roles = await self.bot.db.get_code_trigger_roles(ctx.guild.id, trigger_name)
-                embed.add_field(name=f"{count} | {trigger_name}", value=" ".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
+                print(ctx.guild.get_role(roles[0]).id)
+                embed.add_field(name=f"`{count}       :`  {trigger_name}", value=" ".join([f"<@&{ctx.guild.get_role(role).id}>" for role in roles]))
                 count += 1
             embed.set_footer(text=f"Total {count - 1} code triggers in {ctx.guild.name}", icon_url=ctx.guild.icon_url)
             await ctx.send(embed=embed)
