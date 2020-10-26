@@ -6,7 +6,7 @@ import pytz
 from discord.ext import commands
 
 import identifier
-from identifier import error_embed_builder, warning_embed_builder, success_embed_builder, normal_ember_builder
+from identifier import error_embed_builder, warning_embed_builder, success_embed_builder
 from main import InviteMonitor
 
 
@@ -231,7 +231,7 @@ class Invite(commands.Cog):
     @identifier.debugger
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
-            embed = discord.Embed(title="Code Triggers")
+            embed = discord.Embed(title="Code Triggers", color=0xa8a8ff)
             embed.description = "If someone join through [code], give [@role]\n`[index] : [code]`\n`[@role]`"
             count = 1
             for trigger_name in await self.bot.db.get_code_trigger_list(ctx.guild.id):
@@ -265,7 +265,7 @@ class Invite(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             return await error_embed_builder(ctx, "Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
-            return await error_embed_builder("Too many roles! You can satisfy roles up to 5.")
+            return await error_embed_builder(ctx, "Too many roles! You can satisfy roles up to 5.")
         if target_code in await self.bot.db.get_code_trigger_list(ctx.guild.id):  # 既に設定されている場合は確認する
             await warning_embed_builder(ctx, f"Invite code **{code}** is already configured.\nDo you want to override previous setting?", title="Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
@@ -290,7 +290,7 @@ class Invite(commands.Cog):
     @commands.group(usage="user_trigger", aliases=["ut"], brief="Auto role with inviter", description="Manage triggers that give specific roles to participant who invited by specific user.")
     async def user_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
-            embed = discord.Embed(title="User triggers")
+            embed = discord.Embed(title="User triggers", color=0xa8a8ff)
             embed.description = f"If someone was invited by [user], give [@role]\n`[index] : [user]`\n`[@role]`"
             count = 1
             for trigger_name in await self.bot.db.get_user_trigger_list(ctx.guild.id):
@@ -319,7 +319,7 @@ class Invite(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             return await error_embed_builder(ctx, "Role not found. Please make sure that role exists.")
         elif len(target_role) > 5:
-            return await error_embed_builder("Too many roles! You can satisfy roles up to 5.")
+            return await error_embed_builder(ctx, "Too many roles! You can satisfy roles up to 5.")
         if target_user in await self.bot.db.get_user_trigger_roles(ctx.guild.id):  # 既に設定されている場合は確認する
             await warning_embed_builder(ctx, f"User **{user}** is already configured.\nDo you want to override previous setting?", title="Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
