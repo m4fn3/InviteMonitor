@@ -11,6 +11,7 @@ from SQLManager import SQLManager
 from help import Help
 from identifier import error_embed_builder, success_embed_builder, normal_ember_builder
 from static_data import StaticData
+import platform
 
 # 環境変数の読み込み
 load_dotenv(verbose=True)
@@ -21,7 +22,10 @@ logging.basicConfig(level=logging.INFO)
 
 # PREFIX
 PREFIX = "i/"
-PREFIXES = "i/"
+PREFIXES = ["i/"]
+
+if platform.system() == "Windows":  # テスト環境
+    PREFIXES.append("i!")
 
 
 class InviteMonitor(commands.Bot):
@@ -102,5 +106,5 @@ class InviteMonitor(commands.Bot):
 
 if __name__ == '__main__':
     bot_intents = discord.Intents.all()  # 全てのインテントを有効化
-    bot = InviteMonitor(command_prefix=commands.when_mentioned_or(PREFIXES), help_command=Help(), intents=bot_intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
+    bot = InviteMonitor(command_prefix=PREFIXES, help_command=Help(), intents=bot_intents, status=discord.Status.dnd, activity=discord.Game("Starting...\n"))
     bot.run(os.getenv("TOKEN"))  # BOTを起動

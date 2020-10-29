@@ -3,7 +3,7 @@ from discord.ext import commands
 from main import InviteMonitor
 
 import identifier
-from identifier import error_embed_builder, warning_embed_builder
+from identifier import error_embed_builder, warning_embed_builder, normal_ember_builder, success_embed_builder
 
 class Cache(commands.Cog):
     """Clear cached data"""
@@ -29,17 +29,17 @@ class Cache(commands.Cog):
             await warning_embed_builder(ctx, "Are you really want to delete all invites?\n\nFollowing data will be deleted:\n・All server invites", "Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
-            await ctx.send(f"{self.bot.static_data.emoji.loading} It may takes several time if the server is large..")
+            await normal_ember_builder(ctx, "It may takes several time if the server is large..")
             for invite in await ctx.guild.invites():
                 await invite.delete()
-            await ctx.send(":recycle: All server invites has deleted successfully!")
+            await success_embed_builder(ctx, "All server invites has deleted successfully!")
         else:  # 特定ユーザー分
             target_users = {user.id for user in ctx.message.mentions}
             for invite in await ctx.guild.invites():
                 if invite.inviter.id in target_users:
                     await invite.delete()
             mentions_text = "<@" + "> <@".join(target_users) + ">"
-            await ctx.send(f":recycle: All server invites created by {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
+            await success_embed_builder(ctx, f"All server invites created by {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
 
     @identifier.is_author_has_manage_guild()
     @commands.command(aliases=["clear_caches"], brief="Clear caches", usage="clear_cache (@user)", description="Delete invited counts data of mentioned user. If no user mentioned, delete data of all server members.")
@@ -49,10 +49,10 @@ class Cache(commands.Cog):
             await warning_embed_builder(ctx, "Are you really want to delete all caches?\n\nFollowing data will be deleted:\n・Invite counts of all user", "Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
-            await ctx.send(f"{self.bot.static_data.emoji.loading} It may takes several time if the server is large..")
+            await normal_ember_builder(ctx, "It may takes several time if the server is large..")
             for user in await self.bot.db.get_guild_users(ctx.guild.id):
                 await self.bot.db.reset_user_data(ctx.guild.id, user)
-            await ctx.send(":recycle: All cached data has deleted successfully!")
+            await success_embed_builder(ctx, "All cached data has deleted successfully!")
         else:  # 特定ユーザー分
             target_users = []
             for target_user in ctx.message.mentions:
@@ -60,7 +60,7 @@ class Cache(commands.Cog):
                 if str(target_user.id) in await self.bot.db.get_guild_users(ctx.guild.id):
                     await self.bot.db.reset_user_data(ctx.guild.id, target_user.id)
             mentions_text = "<@" + "> <@".join(target_users) + ">"
-            await ctx.send(f":recycle: All cached data of {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
+            await success_embed_builder(ctx, f"All cached data of {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
 
 
 def setup(bot):

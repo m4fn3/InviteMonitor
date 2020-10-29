@@ -1,8 +1,4 @@
 .env
 __pycache__/
-pkl.py
 .idea/*
 
-
-db_test/
-database.pkl
