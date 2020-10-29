@@ -46,7 +46,7 @@ class SQLManager:
 
     async def is_registered_guild(self, guild_id: int) -> bool:
         """サーバーが登録されているか確認"""
-        res = await self.con.fetch("select count(*) from server where id = $1", guild_id)
+        res = await self.con.fetchrow("select count(*) from server where id = $1", guild_id)
         if res is None or res["count"] is None or res["count"] == 0:
             return False
         else:
