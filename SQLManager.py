@@ -36,17 +36,28 @@ class SQLManager:
 
     async def enable_guild(self, guild_id: int, channel_id: int) -> None:
         """有効にする"""
+        if not await self.is_registered_guild(guild_id):
+            await self.register_new_guild(guild_id)
         await self.con.execute("UPDATE server SET channel = $1 WHERE id = $2;", channel_id, guild_id)
 
     async def disable_guild(self, guild_id: int) -> None:
         """無効にする"""
         await self.con.execute("UPDATE server SET channel = null WHERE id = $1;", guild_id)
 
+    async def is_registered_guild(self, guild_id: int) -> bool:
+        """サーバーが登録されているか確認"""
+        res = await self.con.fetch("select count(*) from server where id = $1", guild_id)
+        if res is None or res["count"] is None or res["count"] == 0:
+            return False
+        else:
+            return True
+
     async def register_new_guild(self, guild_id: int) -> None:
         """新規サーバーのデータを追加"""
         await self.con.execute("INSERT INTO server values($1)", guild_id)
 
     async def get_guild_users_count(self, guild_id: int) -> int:
+        """サーバーが認識しているユーザー数を取得"""
         res = await self.con.fetchrow("SELECT count(keys) FROM (SELECT jsonb_object_keys(users) AS keys FROM server WHERE id = $1)r ;", guild_id)
         if res is None or res["count"] is None:
             return 0
