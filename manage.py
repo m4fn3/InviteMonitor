@@ -75,7 +75,7 @@ class Manage(commands.Cog):
     async def kick_with(self, ctx):
         # そのサーバーでログが設定されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
-            return await error_embed_builder(ctx, "Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
+            return await error_embed_builder(ctx, f"Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
             return await error_embed_builder(ctx, "Please specify at least one user or invite code!")
@@ -124,7 +124,7 @@ class Manage(commands.Cog):
     async def ban_with(self, ctx):
         # そのサーバーでログが設定されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
-            return await error_embed_builder(ctx, "Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
+            return await error_embed_builder(ctx, f"Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
         if len(ctx.message.content.split()) == 1:
             ctx.command.reset_cooldown(ctx)
             return await error_embed_builder(ctx, "Please specify at least one user or invite code!")
