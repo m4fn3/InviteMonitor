@@ -12,7 +12,7 @@ from contextlib import redirect_stdout
 import discord
 import traceback2
 from discord.ext import commands
-
+import time
 import psutil
 from main import InviteMonitor
 
@@ -167,6 +167,14 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         embed.add_field(name="Discord", value=f"```yaml\nServers: {guilds}\nTextChannels: {text_channels}\nVoiceChannels: {voice_channels}\nUsers: {users}\nConnectedVC: {vcs}```", inline=False)
         embed.add_field(name="Run", value=f"```yaml\nUptime: {uptime}\nLatency: {latency:.2f}[s]\n```")
         await ctx.send(embed=embed)
+
+    @commands.command(aliases=["pg"])
+    async def ping(self, ctx):
+        before = time.monotonic()
+        message = await ctx.send("Pong")
+        ping = (time.monotonic() - before) * 1000
+        await message.delete()
+        await ctx.send(f"反応速度: `{int(ping)}`[ms]")
 
     @commands.command()
     async def cmd(self, ctx, *, text):
