@@ -49,6 +49,13 @@ class InviteMonitor(commands.Bot):
         print(f"Logged in to [{self.user}]")
         if not self.db.is_connected():  # データベースに接続しているか確認
             await self.db.connect()  # データベースに接続
+        # サーバーを確認
+        registered_guilds = await self.db.get_guild_ids()
+        for guild in bot.guilds:
+            if guild.id not in registered_guilds:
+                pass
+                # TODO: サーバーの欠落を確認するべきだと思うがon_readyのらぐで反映されないかもしれない - 場所注意
+                # TODO: ＋参加時にlogチャンネルにメっセージ送信
         # 全てのサーバーの招待情報のキャッシュを更新
         for guild_id in await self.db.get_enabled_guild_ids():  # 有効化されているサーバーを取得
             guild = self.get_guild(guild_id)
