@@ -9,6 +9,7 @@ class SQLManager:
         self.con = None
         self.database_url = database_url
 
+    # Connection
     async def connect(self) -> asyncpg.connection:
         """データベースに接続"""
         self.con = await asyncpg.connect(self.database_url)
@@ -20,6 +21,7 @@ class SQLManager:
         else:
             return True
 
+    # Guild
     async def get_guild_ids(self) -> list:
         """登録されているサーバーIDのリストを取得"""
         # SELECT array_agg(id) FROM server // id列の値をすべて配列にして表示
@@ -89,6 +91,7 @@ class SQLManager:
         else:
             return res["channel"]
 
+    # Trigger
     async def get_code_trigger_list(self, guild_id: int) -> list:
         """招待コードトリガーに設定されているコードのリストを取得"""
         # SELECT array_agg(keys) FROM () r // keysを配列に整形して表示 (名前をつけないといけないため任意の名前r(AS r)を追加)
@@ -171,10 +174,14 @@ class SQLManager:
         # WHERE id = guild_id // idがサーバーであるものに適用
         await self.con.execute("UPDATE server set user_trigger = user_trigger - $1 WHERE id = $2;", str(user), guild_id)
 
+    # Invites
     async def add_invited_to_inviter(self, guild_id: int, inviter: int, invited: int) -> None:
         """招待履歴を招待者のデータに追加"""
         if not await self.is_registered_user(guild_id, inviter):
             await self.register_new_user(guild_id, inviter)
+        res = await self.con.fetchrow("select users->$1->'to' as f from server where id = $2;", str(inviter), guild_id)
+        if res is not None and dict(res)["f"] is not None and invited in json.loads(dict(res)["f"]):
+            return  # 既にユーザーが追加されている場合は終了
         # UPDATE server SET users = jsonb_insert(users, '{%d, to, 0}', $1) // users[inviter][to]にある配列にinvitedを追加
         await self.con.execute("UPDATE server SET users = jsonb_insert(users, '{%d, to, 0}', $1)" % inviter, str(invited))
 
@@ -193,6 +200,7 @@ class SQLManager:
         # 文字列を代入したい場合,'"string"'の形式にする必要があるため%で代入
         await self.con.execute("UPDATE server SET users = jsonb_set(users, '{%d, code}', '\"%s\"')" % (invited, code))
 
+    # User
     async def register_new_user(self, guild_id: int, user_id: int) -> None:
         """新規ユーザーデータを追加"""
         init_data = {user_id: {"to": [], "from": None, "code": None, "uid": user_id}}
@@ -246,7 +254,7 @@ class SQLManager:
         if from_list:
             # @from == 128319 || @from == 198733 ... 招待者が128319か198733ならば
             from_sql = "@.from == " + f" || @.from == ".join(from_list)
-            if sql:
+            if sql:  # 招待コードの条件があった場合は OR の記号を追加
                 sql += "||" + from_sql
             else:
                 sql += from_sql
@@ -257,4 +265,3 @@ class SQLManager:
             id_list.add(json.loads(record['jsonb_path_query'])["uid"])
         return id_list
 
-    # TODO: サーバーキーエラーが出た場合新規追加
