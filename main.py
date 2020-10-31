@@ -38,7 +38,7 @@ class InviteMonitor(commands.Bot):
         self.static_data = StaticData()
 
         # データベース接続準備
-        self.db = SQLManager(os.getenv("DATABASE_URL"))
+        self.db = SQLManager(os.getenv("DATABASE_URL"), self.loop)
         self.cache = {}  # 招待キャッシュ
 
         for cog in self.bot_cogs:
