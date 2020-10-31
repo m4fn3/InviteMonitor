@@ -26,12 +26,14 @@ class Manage(commands.Cog):
         else:
             await error_embed_builder(ctx, f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
+    # TODO: 適切なクールダウン設定
+
     @identifier.is_has_kick_members()
     @commands.command(usage="kick [@user]", brief="Kick and wipe their invite", description="Kick the mentioned user and delete invites made by that user.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def kick(self, ctx):
         if not ctx.message.mentions:
-            ctx.command.reset_cooldown(ctx)  # TODO: メンション以外の対応
+            ctx.command.reset_cooldown(ctx)  # TODO: メンション以外の対応(kick,ban,kwith,bwith)
             return await error_embed_builder(ctx, "Please mention at least one user!")
         target_users = set()
         for target in ctx.message.mentions:
