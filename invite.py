@@ -159,6 +159,7 @@ class Invite(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         """メンバーが退出した際のイベント"""
+        # TODO: BOTが退出時に発生するエラーに対処
         if target_channel := await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
             if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
                 # ログを送信

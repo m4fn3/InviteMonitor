@@ -265,3 +265,4 @@ class SQLManager:
             id_list.add(json.loads(record['jsonb_path_query'])["uid"])
         return id_list
 
+    # TODO: asyncpg同時に asyncpg.exceptions._base.InterfaceError: cannot perform operation: another operation is in progress になる問題

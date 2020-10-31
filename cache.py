@@ -44,14 +44,16 @@ class Cache(commands.Cog):
     @identifier.is_author_has_manage_guild()
     @commands.command(aliases=["clear_caches"], brief="Clear caches", usage="clear_cache (@user)", description="Delete invited counts data of mentioned user. If no user mentioned, delete data of all server members.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
+    @identifier.debugger
     async def clear_cache(self, ctx):
+        # 最適化
         if not ctx.message.mentions:  # 全員分
             await warning_embed_builder(ctx, "Are you really want to delete all caches?\n\nFollowing data will be deleted:\n・Invite counts of all user", "Type 'yes' to continue.")
             if not await self.bot.confirm(ctx):
                 return
             await normal_ember_builder(ctx, "It may takes several time if the server is large..")
             for user in await self.bot.db.get_guild_users(ctx.guild.id):
-                await self.bot.db.reset_user_data(ctx.guild.id, user)
+                await self.bot.db.reset_user_data(ctx.guild.id, int(user))
             await success_embed_builder(ctx, "All cached data has deleted successfully!")
         else:  # 特定ユーザー分
             target_users = []
