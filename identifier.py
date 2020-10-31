@@ -126,6 +126,6 @@ def debugger(func):
         except Exception as e:
             orig_error = getattr(e, 'original', e)
             error_msg = ''.join(traceback2.TracebackException.from_exception(orig_error).format())
-            await self.bot.get_channel(664376321278738453).send(f'{error_msg}')
+            await self.bot.get_channel(664376321278738453).send(f'```py\n{error_msg}```')
 
     return wrapped

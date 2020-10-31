@@ -167,7 +167,7 @@ class Invite(commands.Cog):
                 embed.set_thumbnail(url=member.avatar_url)
                 # メンバーがデータベース上に存在しないか、招待元がNoneの場合
                 invite_from = await self.bot.db.get_user_invite_from(member.guild.id, member.id)
-                if await self.bot.db.is_registered_user(member.guild.id, member.id) or invite_from:
+                if not await self.bot.db.is_registered_user(member.guild.id, member.id) or not invite_from:
                     embed.description = f"<@{member.id}> has left\n\n"
                     embed.description += f"`User    :`  {member}\n"
                     embed.description += f"`Inviter :`  Unknown\n"
@@ -175,7 +175,7 @@ class Invite(commands.Cog):
                     inviter_id = invite_from
                     invite_code = await self.bot.db.get_user_invite_code(member.guild.id, member.id)
                     inviter = await self.catch_user(inviter_id)
-                    embed.description = f"<@{member.id}> invited by {'<@' + inviter.id + '>' if inviter != 'Unknown' else 'Unknown'} has left\n\n"
+                    embed.description = f"<@{member.id}> invited by {'<@' + str(inviter.id) + '>' if inviter != 'Unknown' else 'Unknown'} has left\n\n"
                     embed.description += f"`User    :`  {member}\n"
                     embed.description += f"`Code    :`  {invite_code}\n"
                     embed.description += f"`Inviter :`  {inviter}\n"

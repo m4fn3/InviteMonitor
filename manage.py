@@ -1,9 +1,12 @@
 import re
+from typing import List, Tuple, Union
 
+import discord
+import traceback2
 from discord.ext import commands
 
 import identifier
-from identifier import error_embed_builder, success_embed_builder
+from identifier import error_embed_builder, success_embed_builder, warning_embed_builder
 from main import InviteMonitor
 
 
@@ -72,51 +75,44 @@ class Manage(commands.Cog):
     @identifier.is_has_kick_members()
     @commands.command(usage="kick_with [@user | invite code]", brief="Kick with inviter or code", description="Kick the members who was invited by specified user or invite code. Also delete invites made by them.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def kick_with(self, ctx):
-        # そのサーバーでログが設定されているか確認
-        if not await self.bot.db.is_enabled_guild(ctx.guild.id):
-            return await error_embed_builder(ctx, f"Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
-        if len(ctx.message.content.split()) == 1:
-            ctx.command.reset_cooldown(ctx)
-            return await error_embed_builder(ctx, "Please specify at least one user or invite code!")
-        mentions = {user.id for user in ctx.message.mentions}
-        clean_text = re.sub(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/", " ", ctx.message.content.split(" ", 1)[1])
-        clean_text = re.sub(r"<@!?\d+>", " ", clean_text)
-        invites = set(clean_text.split())
-        target_users = set()
-        error_msg = ""
-        # 招待コードが有効であることを確認する,有効あらばリンクの作成者を対象者に追加
-        target_invites = set()
-        for invite in invites:
-            if invite not in self.bot.cache[ctx.guild.id]:
-                error_msg += f":x: `{invite}` is invalid invite code.\n"
-            else:
-                target_invites.add(invite)
-                target_users.add(self.bot.cache[ctx.guild.id][invite]["author"])
-        # 指定されたユーザーに招待された人のIDのリストを作成
-        for user in await self.bot.db.get_guild_users(ctx.guild.id):
-            # 招待者がメンションリストに含まれるか、招待コードが招待コードリストに含まれる場合
-            if (await self.bot.db.get_user_invite_from(ctx.guild.id, user) in mentions) or (await self.bot.db.get_user_invite_code(ctx.guild.id, user) in target_invites):
-                target_users.add(int(user))
-        target_users = target_users.union(mentions)
-        # Kickに成功した人のみのリストを作成
-        target_checked = set()
-        for target in target_users:
-            try:
-                await ctx.guild.get_member(target).kick()
-            except:
-                error_msg += f":x: Failed to kick user <@{target}>\n"
-            else:
-                target_checked.add(str(target))
-        if error_msg != "":
-            await error_embed_builder(ctx, error_msg[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_msg) >= 1900 else error_msg)
-        if not target_checked:
-            return await error_embed_builder(ctx, f"No user found.")
-        for invite in await ctx.guild.invites():
-            if (str(invite.inviter.id) in target_checked) or (invite.code in invites):
-                await invite.delete()
-        mentions_text = "<@" + "> <@".join(target_checked) + ">"
-        await success_embed_builder(ctx, f"{mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
+    @identifier.debugger
+    async def kick_with(self, ctx, *, cond):
+        try:
+            # そのサーバーでログが設定されているか確認
+            if not await self.bot.db.is_enabled_guild(ctx.guild.id):
+                return await error_embed_builder(ctx, f"Monitoring not enabled! Please setup by `{self.bot.PREFIX}enable` command before this feature.")
+            users, codes, wrongs, code_authors = await self.extract_condition(cond, ctx.guild)
+            if wrongs:  # ワーニングが存在した場合
+                await warning_embed_builder(ctx, "Invite code is invalid or the user does not exist on the server. " + ",".join(wrongs) + "\n")
+            if not users and not codes:  # 条件が0の場合SQLでエラーになるので回避
+                return await error_embed_builder(ctx, "No target found.")
+            target_users = await self.bot.db.filter_with_code_and_from(codes, users, ctx.guild.id)
+            target_users = target_users.union(set(code_authors))  # 招待コードの作者を追加
+            target_users = target_users.union(set(users))  # 指定されたユーザーを追加
+            error_log = ""
+            # Kickに成功した人のみのリストを作成
+            target_checked = set()
+            for target in target_users:
+                if (member := discord.utils.get(ctx.guild.members, id=target)) is None:
+                    continue  # 対象者がサーバー上に存在しない場合
+                try:
+                    await member.kick()
+                except:
+                    error_log += f"Failed to kick user <@{target}>\n"
+                else:
+                    target_checked.add(str(target))
+            if error_log != "":
+                error_log += "They has same or higher role than me."
+                await error_embed_builder(ctx, error_log[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_log) >= 1900 else error_log)
+            if not target_checked:
+                return await error_embed_builder(ctx, f"No user found to kick.")
+            for invite in await ctx.guild.invites():
+                if (str(invite.inviter.id) in target_checked) or (invite.code in codes):
+                    await invite.delete()
+            mentions_text = "<@" + "> <@".join(target_checked) + ">"
+            await success_embed_builder(ctx, f"{mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has kicked successfully!")
+        except:
+            await ctx.send(traceback2.format_exc())
 
     @identifier.is_has_ban_members()
     @commands.command(usage="ban_with [@user | code]", brief="Ban with inviter or code", description="Ban the members who was invited by specified user or invite code. Also delete invites made by them.")
@@ -166,6 +162,54 @@ class Manage(commands.Cog):
                 await invite.delete()
         mentions_text = "<@" + "> <@".join(target_checked) + ">"
         await success_embed_builder(ctx, f"{mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has banned successfully!")
+
+    async def extract_condition(self, condition: str, guild: discord.Guild) -> (List[discord.User], List[str], List[str]):
+        user_list: List[Union[Tuple[int, str], Tuple[int]]] = []  # 抽出されたユーザーIDリスト
+        code_list: List[Tuple[str, str]] = []  # 抽出された招待コードリスト
+        users: List[str] = []  # 確認後のユーザーオブジェクトリスト
+        codes: List[str] = []  # 確認後の招待コードリスト
+        wrongs: List[str] = []  # 問題のある条件リスト
+        code_authors: List[id] = []
+        # (ユーザーIDまたｈ招待コード, 元条件)
+        for cond in condition.split():
+            # 形式を判定して仮リストに追加
+            if (match := re.match(r"<@!?(?P<id>\d+)>", cond)) is not None:  # <!@>の形なら->間の数字を取得(ユーザー)
+                user_list.append((int(match.group("id")), cond))
+            elif (match := re.search(r"(https?://)?(www.)?(discord.gg|(ptb.|canary.)?discord(app)?.com/invite)/(?P<invite>[a-zA-Z_]{2,32})", cond)) is not None:  # https://discord.gg/の形なら->最後の文字列を取得(招待)
+                code_list.append((match.group("invite"), cond))
+            elif cond.isdigit():  # 全部数字なら->数字を取得(ユーザー)
+                user_list.append((int(cond), cond))
+            elif "#" in cond:  # #が含まれるなら->name#suuziを取得(ユーザー)
+                if (user := discord.utils.get(self.bot.users, name=cond.split("#")[0], discriminator=cond.split("#")[1])) is not None:
+                    user_list.append((user.id, cond))  # ユーザーが見つかった場合
+                else:  # ユーザーが見つからなかった場合
+                    wrongs.append(cond)
+            else:  # 文字列を取得(招待)
+                code_list.append((cond, cond))
+        # 招待コードリストの確認
+        for code_cond in code_list:  # 招待コードの確認
+            if code_cond[0] not in self.bot.cache[guild.id]:  # 招待キャッシュに存在しない場合
+                wrongs.append(code_cond[1])
+            else:
+                code_authors.append(self.bot.cache[guild.id][code_cond[0]]["author"])  # 招待の作成者を追加
+            codes.append(code_cond[0])
+        # ユーザーIDリストの確認
+        for user_cond in user_list:
+            if discord.utils.get(guild.members, id=user_cond[0]) is None:  # メンバーでない場合
+                if len(user_cond) == 2:
+                    wrongs.append(user_cond[1])
+            users.append(str(user_cond[0]))
+
+        return users, codes, wrongs, code_authors
+
+    async def catch_user(self, user_id: int):
+        """効率よくユーザーデータを取得する"""
+        if (user := self.bot.get_user(user_id)) is None:  # キャッシュから取得
+            try:
+                user = await self.bot.fetch_user(user_id)  # APIから取得
+            except:
+                return None
+        return user
 
 
 def setup(bot):

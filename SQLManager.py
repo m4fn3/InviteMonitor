@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Optional, List, Set
 
 import asyncpg
 
@@ -195,7 +195,7 @@ class SQLManager:
 
     async def register_new_user(self, guild_id: int, user_id: int) -> None:
         """新規ユーザーデータを追加"""
-        init_data = {user_id: {"to": [], "from": None, "code": None}}
+        init_data = {user_id: {"to": [], "from": None, "code": None, "uid": user_id}}
         await self.con.execute("UPDATE server SET users = users||$1::jsonb WHERE id = $2", json.dumps(init_data), guild_id)
 
     async def reset_user_data(self, guild_id: int, user_id: int):
@@ -236,5 +236,25 @@ class SQLManager:
             return False
         else:
             return True
+
+    async def filter_with_code_and_from(self, code_list: List[str], from_list: List[str], guild_id: int) -> Set[int]:
+        """指定した招待コードまたは招待者によって参加した人のIDリストを取得"""
+        sql = ""
+        # @.code like_regex "code1|code2" ... 招待コードがcode1またはcode2であるならば
+        if code_list:
+            sql += "@.code like_regex \"" + "|".join([f"{i}" for i in code_list]) + "\""
+        if from_list:
+            # @from == 128319 || @from == 198733 ... 招待者が128319か198733ならば
+            from_sql = "@.from == " + f" || @.from == ".join(from_list)
+            if sql:
+                sql += "||" + from_sql
+            else:
+                sql += from_sql
+        id_list = set()
+        # SELECT jsonb_path_query(users, '$.* ? (%s)') FROM server; ... 任意のキー内の条件に合う値を取得
+        res = await self.con.fetch("SELECT jsonb_path_query(users, '$.* ? (%s)') FROM server where id = $1;" % sql, guild_id)
+        for record in res:
+            id_list.add(json.loads(record['jsonb_path_query'])["uid"])
+        return id_list
 
     # TODO: サーバーキーエラーが出た場合新規追加
