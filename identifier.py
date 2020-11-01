@@ -33,12 +33,12 @@ async def normal_ember_builder(sendable, text: str, title: str = None):
     await sendable.send(embed=embed)
 
 
-def is_author_has_manage_guild():
+def is_author_has_manage():
     """サーバーの管理 権限を実行者が持っているか判定"""
 
     async def predicate(ctx):
-        if not ctx.author.guild_permissions.manage_guild:
-            await error_embed_builder(ctx, "You don't have __manage_guild__ permission!", title="Missing Permission")
+        if not (ctx.author.guild_permissions.manage_guild and ctx.author.guild_permissions.manage_channels):
+            await error_embed_builder(ctx, "You don't have __manage_guild, manage_channels__ permission!", title="Missing Permission")
             return False
         else:
             return True
@@ -46,15 +46,15 @@ def is_author_has_manage_guild():
     return commands.check(predicate)
 
 
-def is_has_manage_guild():
+def is_has_manage():
     """サーバーの管理 権限をBOTと実行者が持っているか判定"""
 
     async def predicate(ctx):
-        if not ctx.author.guild_permissions.manage_guild:
-            await error_embed_builder(ctx, "You don't have __manage_guild__ permission!", title="Missing Permission")
+        if not (ctx.author.guild_permissions.manage_guild and ctx.author.guild_permissions.manage_channels):
+            await error_embed_builder(ctx, "You don't have __manage_guild, manage_channels__ permission!", title="Missing Permission")
             return False
-        elif not ctx.guild.me.guild_permissions.manage_guild:
-            await error_embed_builder(ctx, "I don't have __manage_guild__ permission!", title="Permission denied")
+        elif not (ctx.guild.me.guild_permissions.manage_guild and ctx.guild.me.guild_permissions.manage_channels):
+            await error_embed_builder(ctx, "I don't have __manage_guild, manage_channels__ permission!", title="Permission denied")
             return False
         else:
             return True

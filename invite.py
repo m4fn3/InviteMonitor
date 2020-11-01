@@ -38,8 +38,8 @@ class Invite(commands.Cog):
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
         """招待が作成された際のイベント"""
-        if target_channel := await self.bot.db.get_log_channel_id(invite.guild.id):  # サーバーで有効化されている場合
-            if invite.guild.me.guild_permissions.manage_guild:  # 権限を確認
+        if await self.bot.db.get_log_channel_id(invite.guild.id):  # サーバーで有効化されている場合
+            if invite.guild.me.guild_permissions.manage_guild and invite.guild.me.guild_permissions.manage_channels:  # 権限を確認
                 # 招待キャッシュを更新
                 await self.bot.update_server_cache(invite.guild)
                 # ログを送信
@@ -50,15 +50,17 @@ class Invite(commands.Cog):
                 embed.description += f"`Max Uses :`  {self.parse_max_uses(invite.max_uses)} times\n"
                 embed.description += f"`Max Age  :`  {self.parse_max_age(invite.max_age)}\n"
                 embed.description += f"`Invite   :`  {invite.inviter}"
-                await self.bot.get_channel(target_channel).send(embed=embed)
+                await self.bot.log_send(invite.guild, embed=embed)
             else:  # 権限不足エラー
-                pass  # TODO: manage_guild不足通知
+                await self.bot.perm_lack_reporter(invite.guild, ["manage_guild", "manage_channels"])
 
     @commands.Cog.listener()
+    @identifier.debugger
     async def on_invite_delete(self, invite: discord.Invite):
         """招待が削除された際のイベント"""
-        if target_channel := await self.bot.db.get_log_channel_id(invite.guild.id):  # サーバーで有効化されている場合
-            if invite.guild.me.guild_permissions.manage_guild:  # 権限を確認
+        print("ik")
+        if await self.bot.db.get_log_channel_id(invite.guild.id):  # サーバーで有効化されている場合
+            if invite.guild.me.guild_permissions.manage_guild and invite.guild.me.guild_permissions.manage_channels:  # 権限を確認
                 inviter = None
                 if invite.code in self.bot.cache[invite.guild.id]:  # 招待キャッシュから、招待作成者を取得
                     inviter = self.bot.cache[invite.guild.id][invite.code]['author']
@@ -71,20 +73,20 @@ class Invite(commands.Cog):
                 embed.description += f"`Channel  :`  <#{invite.channel.id}>\n"
                 user = await self.catch_user(inviter)  # 招待者を取得
                 embed.description += f"`Inviter  :`  {user}\n"
-                await self.bot.get_channel(target_channel).send(embed=embed)
+                await self.bot.log_send(invite.guild, embed=embed)
                 # Triggerに登録されたコードが削除されていないかどうか確認する
                 if invite.code in await self.bot.db.get_code_trigger_list(invite.guild.id):
                     # 通知文を送信
-                    await self.bot.get_channel(target_channel).send(f":warning: Invite `{invite.code}` was deleted, so this trigger is no longer available!")
+                    await self.bot.log_send(invite.guild, content="f:warning: Invite `{invite.code}` was deleted, so this trigger is no longer available!")
                     await self.bot.db.remove_code_trigger(invite.guild.id, invite.code)  # 削除する
             else:  # 権限不足エラー
-                pass  # TODO: manage_guild不足通知
+                await self.bot.perm_lack_reporter(invite.guild, ["manage_guild", "manage_channels"])
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """メンバーが参加した際のイベント"""
-        if target_channel := await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
-            if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
+        if await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
+            if member.guild.me.guild_permissions.manage_guild and member.guild.me.guild_permissions.manage_channels:  # 権限を確認
                 old_invite_cache = self.bot.cache[member.guild.id]  # 前の招待キャッシュを取得
                 new_invite_cache = await self.bot.update_server_cache(member.guild)  # 後の招待キャッシュを取得
                 res = await self.check_invite_diff(old_invite_cache, new_invite_cache)  # 差異から招待者を特定
@@ -113,7 +115,7 @@ class Invite(commands.Cog):
                 # ログを送信
                 embed.description += f"`Created :` {delta} ago"
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
-                await self.bot.get_channel(target_channel).send(embed=embed)
+                await self.bot.log_send(member.guild, embed=embed)
                 # UserTriggerを確認
                 if res is None:  # 招待を認識できなかった場合
                     return
@@ -126,7 +128,7 @@ class Invite(commands.Cog):
                                 target_role.append(role)  # 役職を取得できた場合、追加
                         error_msg = ""
                         if not target_role:  # 役職を取得できない場合
-                            await self.bot.get_channel(target_channel).send(f":warning: Roles were not found, so code trigger **{res[0]}** is no longer available!")
+                            await self.bot.log_send(member.guild, content=f":warning: Roles were not found, so code trigger **{res[0]}** is no longer available!")
                             await self.bot.db.remove_user_trigger(member.guild.id, res[0])
                         else:
                             try:
@@ -134,7 +136,7 @@ class Invite(commands.Cog):
                             except:  # 役職の付与に失敗した場合
                                 error_msg += f":x: Failed to add role `{','.join([role.name for role in target_role])}` of user trigger **{res[0]}**\nPlease check position of role! These may be higher role than I have.\n"
                         if error_msg != "":  # エラーが発生した場合
-                            await self.bot.get_channel(target_channel).send(error_msg)
+                            await self.bot.log_send(member.guild, content=error_msg)
 
                     elif res[1] in await self.bot.db.get_code_trigger_roles(member.guild.id, res[1]):
                         roles = await self.bot.db.get_code_trigger_roles(member.guild.id, res[1])
@@ -144,7 +146,7 @@ class Invite(commands.Cog):
                                 target_role.append(role)  # 役職を取得できた場合、追加
                         error_msg = ""
                         if not target_role:  # 役職を取得できない場合
-                            await self.bot.get_channel(target_channel).send(f":warning: Roles were not found, so user trigger **{res[1]}** is no longer available!")
+                            await self.bot.log_send(member.guild, f":warning: Roles were not found, so user trigger **{res[1]}** is no longer available!")
                             await self.bot.db.remove_code_trigger(member.guild.id, res[1])
                         else:
                             try:
@@ -152,17 +154,17 @@ class Invite(commands.Cog):
                             except:  # 役職の付与に失敗した場合
                                 error_msg += f":x: Failed to add role `{','.join([role.name for role in target_role])}` of code trigger **{res[1]}**\nPlease check position of role! These may be higher role than I have.\n"
                         if error_msg != "":  # エラーが発生した場合
-                            await self.bot.get_channel(target_channel).send(error_msg)
+                            await self.bot.log_send(member.guild, content=error_msg)
             else:  # 権限不足エラー
-                pass  # TODO: manage_guild不足通知
+                await self.bot.perm_lack_reporter(member.guild, ["manage_guild", "manage_channels"])
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         """メンバーが退出した際のイベント"""
         if member.guild.me is None:
             return  # 自分自身がサーバーを退出した時
-        if target_channel := await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
-            if member.guild.me.guild_permissions.manage_guild:  # 権限を確認
+        if await self.bot.db.get_log_channel_id(member.guild.id):  # サーバーで有効化されている場合
+            if member.guild.me.guild_permissions.manage_guild and member.guild.me.guild_permissions.manage_channels:  # 権限を確認
                 # ログを送信
                 embed = discord.Embed(color=0xffa8a8)
                 embed.set_author(name="Member Left", icon_url="https://cdn.discordapp.com/emojis/762305607625605140.png")
@@ -185,7 +187,9 @@ class Invite(commands.Cog):
                 embed.timestamp, delta = self.get_delta_time(member.joined_at)
                 embed.description += f"`Stayed  :`  {delta}"
                 embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
-                await self.bot.get_channel(target_channel).send(embed=embed)
+                await self.bot.log_send(member.guild, embed=embed)
+            else:  # 権限不足エラー
+                await self.bot.perm_lack_reporter(member.guild, ["manage_guild", "manage_channels"])
 
     @commands.Cog.listener()
     async def check_invite_diff(self, old_invites, new_invites):

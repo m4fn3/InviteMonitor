@@ -25,7 +25,7 @@ class Setting(commands.Cog):
         else:
             await error_embed_builder(ctx, f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
-    @identifier.is_has_manage_guild()
+    @identifier.is_has_manage()
     @commands.command(usage="enable (#channel)", brief="Start monitoring", description="Start monitor invites and report logs to specified channel. If no channel provided, set to channel command executed.")
     async def enable(self, ctx):
         # 対象チャンネルを取得
@@ -34,12 +34,16 @@ class Setting(commands.Cog):
             target_channel = ctx.channel
         else:
             target_channel = ctx.message.channel_mentions[0]
+        # 権限を確認
+        perms = target_channel.permissions_for(ctx.guild.me)
+        if not (perms.send_messages and perms.embed_links and perms.read_messages):
+            return await error_embed_builder(ctx, f"Missing `read_messages, send_messages, embed_links` permissions in <#{target_channel.id}>")
         # チャンネルデータを保存
         await self.bot.db.enable_guild(ctx.guild.id, target_channel.id)
         await self.bot.update_server_cache(ctx.guild)  # 招待キャッシュを作成
         await success_embed_builder(ctx, f"Log channel has been set to {target_channel.mention} successfully!\nNow started to monitor invites and report logs.")
 
-    @identifier.is_has_manage_guild()
+    @identifier.is_has_manage()
     @commands.command(usage="disable", brief="Stop monitoring", description="Stop monitoring and reporting information in the server.")
     async def disable(self, ctx):
         # 有効化されているか確認

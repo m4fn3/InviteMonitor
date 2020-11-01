@@ -14,3 +14,4 @@ class StaticData:
     emoji_member_join = "<:member_join:762305608271265852>"
     emoji_member_leave = "<:member_leave:762305607625605140>"
     emoji_no_mag = "<:no_mag:763683888236986388>"
+    emoji_stop = "<:stop:769878804948058143>"

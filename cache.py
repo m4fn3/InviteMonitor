@@ -21,7 +21,7 @@ class Cache(commands.Cog):
         else:
             await error_embed_builder(ctx, f":tools: Unexpected error has occurred. please contact to bot developer.\n```py\n{str(error)[:1900]}```")
 
-    @identifier.is_has_manage_guild()
+    @identifier.is_has_manage()
     @commands.command(aliases=["clear_invite"], brief="Clear invites", usage="clear_invites (@user)", description="Delete invites made by mentioned user. If no user mentioned, delete all invite url/codes of the server.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     async def clear_invites(self, ctx):
@@ -41,7 +41,7 @@ class Cache(commands.Cog):
             mentions_text = "<@" + "> <@".join(target_users) + ">"
             await success_embed_builder(ctx, f"All server invites created by {mentions_text[:1900].rsplit('<', 1)[0] + '...' if len(mentions_text) >= 1900 else mentions_text} has deleted successfully!")
 
-    @identifier.is_author_has_manage_guild()
+    @identifier.is_author_has_manage()
     @commands.command(aliases=["clear_caches"], brief="Clear caches", usage="clear_cache (@user)", description="Delete invited counts data of mentioned user. If no user mentioned, delete data of all server members.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
     @identifier.debugger

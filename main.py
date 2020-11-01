@@ -1,7 +1,11 @@
 import asyncio
+import identifier
 import logging
 import os
+import platform
+import random
 import time
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -11,7 +15,6 @@ from SQLManager import SQLManager
 from help import Help
 from identifier import error_embed_builder, success_embed_builder, normal_ember_builder
 from static_data import StaticData
-import platform
 
 # 環境変数の読み込み
 load_dotenv(verbose=True)
@@ -69,6 +72,11 @@ class InviteMonitor(commands.Bot):
         """BOT自身がサーバーに参加した際のイベント"""
         # サーバー情報をデータベースに新規登録
         await self.db.register_new_guild(guild.id)
+        # 参加時メッセージを送信
+        embed = discord.Embed(title="Thank you for inviteing me!", color=0xff7f7f)
+        embed.description = f"To get started, simply type `{self.PREFIX}enable #channel`\nSince then monitor logs will be sent to the channel!\n\nIf you need help, please contact on [Support Server]({bot.static_data.server})"
+        embed.set_footer(icon_url="https://cdn.discordapp.com/emojis/769855038964891688.png", text="I hope you will enjoy the bot:)")
+        await self.find_send(guild, embed=embed)
 
     async def on_guild_remove(self, guild):
         """BOT自身がサーバーを退出した際のイベント"""
@@ -88,8 +96,8 @@ class InviteMonitor(commands.Bot):
 
     async def update_server_cache(self, guild: discord.guild):
         """サーバーの招待キャッシュを更新"""
-        if not guild.me.guild_permissions.manage_guild:
-            return []  # TODO: 応急処置 = manage_guild不足通知
+        if not (guild.me.guild_permissions.manage_guild and guild.me.guild_permissions.manage_channels):
+            return await self.perm_lack_reporter(guild, ["manage_guild", "manage_channels"])
         invites = {invite.code: {"uses": invite.uses, "author": invite.inviter.id} for invite in await guild.invites()}
         self.cache[guild.id] = invites
         return invites
@@ -110,6 +118,68 @@ class InviteMonitor(commands.Bot):
             return 0
         else:
             return 1
+
+    # TODO: trigger動作確認
+
+    @identifier.debugger
+    async def find_send(self, guild: discord.Guild, content: str = "", embed: Optional[discord.Embed] = None, try_owner: bool = False):
+        args = {}
+        if embed is not None:
+            args["embed"] = embed
+        if content != "":
+            args["content"] = content
+        channels = guild.text_channels
+        random.shuffle(channels)
+        if (sys_ch := guild.system_channel) is not None:
+            channels.insert(0, sys_ch)
+        for channel in channels:
+            perms = channel.permissions_for(guild.me)
+            if perms.send_messages and perms.embed_links and perms.read_messages:
+                await channel.send(**args)
+                break
+        else:  # どのチャンネルにも送信できなかった場合
+            if try_owner:
+                try:
+                    guild.owner.senr(**args)
+                except:
+                    pass
+
+    @identifier.debugger
+    async def perm_lack_reporter(self, guild: discord.Guild, perms: list):
+        """権限不足通知を送信"""
+        perm_str = "\n".join(["- " + perm for perm in perms])
+        embed = discord.Embed(title=f"{self.static_data.emoji_stop}  Important Warning  {self.static_data.emoji_stop}", color=0xff0000)
+        embed.description = "The feature was automatically __disabled__ because monitoring failed due to lack of following permission:" \
+                            f"```diff\n{perm_str}```" \
+                            f"If you want to continue monitoring, add permissions to the BOT and setup by `{self.PREFIX}enable` again."
+        await self.log_send(guild, embed=embed)
+        await self.db.disable_guild(guild.id)
+
+    @identifier.debugger
+    async def log_send(self, guild: discord.Guild, content: str = "", embed: Optional[discord.Embed] = None):
+        """ログチャンネルにログめっせーぞを送信"""
+        log_channel_id = await self.db.get_log_channel_id(guild.id)
+        log_channel = self.get_channel(log_channel_id)
+        if log_channel is None:
+            embed = discord.Embed(title=f"{self.static_data.emoji_stop}  Important Warning  {self.static_data.emoji_stop}", color=0xff0000)
+            embed.description = f"The feature was automatically __disabled__ because log channel (<#{log_channel_id}>) was not found\n" \
+                                f"If you want to continue monitoring, setup different channel by `{self.PREFIX}enable` again."
+            await self.db.disable_guild(guild.id)
+            return await self.find_send(guild, embed=embed)
+        perms = log_channel.permissions_for(guild.me)
+        if not (perms.send_messages and perms.embed_links and perms.read_messages):
+            embed = discord.Embed(title=f"{self.static_data.emoji_stop}  Important Warning  {self.static_data.emoji_stop}", color=0xff0000)
+            embed.description = f"The feature was automatically __disabled__ because missing following permissions in log channel (<#{log_channel_id}>)" \
+                                "```diff\n- read_messages\n- send_messages\n- embed_links```" \
+                                f"If you want to continue monitoring, add permissions to the BOT and setup by `{self.PREFIX}enable` again."
+            await self.db.disable_guild(guild.id)
+            return await self.find_send(guild, embed=embed)
+        args = {}
+        if embed is not None:
+            args["embed"] = embed
+        if content != "":
+            args["content"] = content
+        await log_channel.send(**args)
 
 
 if __name__ == '__main__':
