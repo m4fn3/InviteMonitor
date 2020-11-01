@@ -46,25 +46,24 @@ class InviteMonitor(commands.Bot):
 
     async def on_ready(self):
         """キャッシュの準備ができた際のイベント"""
-        print(f"Logged in to [{self.user}]")
         if not self.db.is_connected():  # データベースに接続しているか確認
+            print(f"Logged in to [{self.user}]")
             await self.db.connect()  # データベースに接続
-        # サーバーを確認
-        registered_guilds = await self.db.get_guild_ids()
-        for guild in bot.guilds:
-            if guild.id not in registered_guilds:
-                pass
-                # TODO: サーバーの欠落を確認するべきだと思うがon_readyのらぐで反映されないかもしれない - 場所注意
-                # TODO: ＋参加時にlogチャンネルにメっセージ送信
-        # 全てのサーバーの招待情報のキャッシュを更新
-        for guild_id in await self.db.get_enabled_guild_ids():  # 有効化されているサーバーを取得
-            guild = self.get_guild(guild_id)
-            if guild is None:  # BOTのダウンタイム中にサーバーを退出した場合
-                await self.db.disable_guild(guild_id)
-            else:
-                await self.update_server_cache(guild)
-        # 起動後のBOTステータスを設定
-        await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
+            # 全てのサーバーの招待情報のキャッシュを更新
+            for guild_id in await self.db.get_enabled_guild_ids():  # 有効化されているサーバーを取得
+                guild = self.get_guild(guild_id)
+                if guild is None:  # BOTのダウンタイム中にサーバーを退出した場合
+                    await self.db.disable_guild(guild_id)
+                else:
+                    await self.update_server_cache(guild)
+            # サーバーを確認
+            registered_guilds = set(await self.db.get_guild_ids())
+            joined_guilds = {guild.id for guild in bot.guilds}
+            new_guilds = joined_guilds - registered_guilds
+            for guild in new_guilds:
+                await self.db.register_new_guild(guild)
+            # 起動後のBOTステータスを設定
+            await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
     async def on_guild_join(self, guild: discord.guild):
         """BOT自身がサーバーに参加した際のイベント"""
@@ -82,6 +81,8 @@ class InviteMonitor(commands.Bot):
         """メッセージを受け取った際のイベント"""
         if message.content == f"<@!{self.user.id}>":  # メンションされた場合、簡単な説明分を送信
             await normal_ember_builder(message.channel, f"My prefix is **{self.PREFIX}**\nSee list of commands by `{self.PREFIX}help`")
+        elif not self.is_ready():  # 準備ができるまでは待機
+            return
         else:  # コマンドを処理
             await self.process_commands(message)
 
