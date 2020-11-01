@@ -89,7 +89,7 @@ class InviteMonitor(commands.Bot):
     async def update_server_cache(self, guild: discord.guild):
         """サーバーの招待キャッシュを更新"""
         if not guild.me.guild_permissions.manage_guild:
-            return []  # TODO: 応急処置
+            return []  # TODO: 応急処置 = manage_guild不足通知
         invites = {invite.code: {"uses": invite.uses, "author": invite.inviter.id} for invite in await guild.invites()}
         self.cache[guild.id] = invites
         return invites

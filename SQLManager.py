@@ -57,7 +57,10 @@ class SQLManager:
 
     async def register_new_guild(self, guild_id: int) -> None:
         """新規サーバーのデータを追加"""
-        await self.con.execute("INSERT INTO server values($1)", guild_id)
+        try:
+            await self.con.execute("INSERT INTO server values($1)", guild_id)
+        except asyncpg.exceptions.UniqueViolationError:
+            pass  # サーバーに再参加した場合
 
     async def get_guild_users_count(self, guild_id: int) -> int:
         """サーバーが認識しているユーザー数を取得"""
@@ -265,5 +268,3 @@ class SQLManager:
         for record in res:
             id_list.add(json.loads(record['jsonb_path_query'])["uid"])
         return id_list
-
-    # TODO: asyncpg同時に asyncpg.exceptions._base.InterfaceError: cannot perform operation: another operation is in progress になる問題
