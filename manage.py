@@ -2,7 +2,6 @@ import re
 from typing import List, Tuple, Union
 
 import discord
-import traceback2
 from discord.ext import commands
 
 import identifier
@@ -28,23 +27,41 @@ class Manage(commands.Cog):
 
     # TODO: 適切なクールダウン設定
 
+    def extract_user(self, condition):
+        user_list = []
+        for cond in condition.split():
+            if (match := re.match(r"<@!?(?P<id>\d+)>", cond)) is not None:
+                user_list.append(int(match.group("id")))
+            elif cond.isdigit():
+                user_list.append(int(cond))
+            elif "#" in cond:
+                if (user := discord.utils.get(self.bot.users, name=cond.split("#")[0], discriminator=cond.split("#")[1])) is not None:
+                    user_list.append(user.id)
+            else:
+                if (user := discord.utils.get(self.bot.users, name=cond)) is not None:
+                    user_list.append(user.id)
+        return user_list
+
     @identifier.is_has_kick_members()
     @commands.command(usage="kick [@user]", brief="Kick and wipe their invite", description="Kick the mentioned user and delete invites made by that user.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def kick(self, ctx):
-        if not ctx.message.mentions:
-            ctx.command.reset_cooldown(ctx)  # TODO: メンション以外の対応(kick,ban,kwith,bwith)
-            return await error_embed_builder(ctx, "Please mention at least one user!")
+    async def kick(self, ctx, *, condition):
+        error_log = ""
         target_users = set()
-        for target in ctx.message.mentions:
+        for target in self.extract_user(condition):
+            if (member := ctx.guild.get_member(target)) is None:
+                error_log += f"User not in this server: <@{target}>\n"
+                continue
             try:
-                await ctx.guild.get_member(target.id).kick()
-            except:  # TODO: 大量にいる場合の対策
-                await error_embed_builder(ctx, f"Failed to kick user <@{target.id}>")
+                await member.kick()
+            except:
+                error_log += f"Failed to kick user <@{target}>\n"
             else:
-                target_users.add(str(target.id))
+                target_users.add(str(target))
+        if error_log != "":
+            await error_embed_builder(ctx, error_log[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_log) >= 1900 else error_log)
         if not target_users:
-            return
+            return await error_embed_builder(ctx, "No user found to kick")
         for invite in await ctx.guild.invites():
             if str(invite.inviter.id) in target_users:
                 await invite.delete()
@@ -54,20 +71,23 @@ class Manage(commands.Cog):
     @identifier.is_has_ban_members()
     @commands.command(usage="ban [@user]", brief="Ban and wipe their invite", description="Ban the mentioned user and delete invites made by that user.")
     @commands.cooldown(1, 10, commands.BucketType.guild)
-    async def ban(self, ctx):
-        if not ctx.message.mentions:
-            ctx.command.reset_cooldown(ctx)
-            return await error_embed_builder(ctx, "Please mention at least one user!")
+    async def ban(self, ctx, *, condition):
+        error_log = ""
         target_users = set()
-        for target in ctx.message.mentions:
+        for target in self.extract_user(condition):
+            if (member := ctx.guild.get_member(target)) is None:
+                error_log += f"User not in this server: <@{target}>\n"
+                continue
             try:
-                await ctx.guild.get_member(target.id).ban()
+                await member.ban()
             except:
-                await error_embed_builder(ctx, f"Failed to kick user <@{target.id}>")
+                error_log += f"Failed to ban user <@{target}>\n"
             else:
-                target_users.add(str(target.id))
+                target_users.add(str(target))
+        if error_log != "":
+            await error_embed_builder(ctx, error_log[:1900].rsplit("\n", 1)[0] + "\n..." if len(error_log) >= 1900 else error_log)
         if not target_users:
-            return
+            return await error_embed_builder(ctx, "No user found to ban")
         for invite in await ctx.guild.invites():
             if str(invite.inviter.id) in target_users:
                 await invite.delete()
