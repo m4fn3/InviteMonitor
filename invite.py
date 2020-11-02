@@ -58,7 +58,6 @@ class Invite(commands.Cog):
     @identifier.debugger
     async def on_invite_delete(self, invite: discord.Invite):
         """招待が削除された際のイベント"""
-        print("ik")
         if await self.bot.db.get_log_channel_id(invite.guild.id):  # サーバーで有効化されている場合
             if invite.guild.me.guild_permissions.manage_guild and invite.guild.me.guild_permissions.manage_channels:  # 権限を確認
                 inviter = None
@@ -137,8 +136,7 @@ class Invite(commands.Cog):
                                 error_msg += f":x: Failed to add role `{','.join([role.name for role in target_role])}` of user trigger **{res[0]}**\nPlease check position of role! These may be higher role than I have.\n"
                         if error_msg != "":  # エラーが発生した場合
                             await self.bot.log_send(member.guild, content=error_msg)
-
-                    elif res[1] in await self.bot.db.get_code_trigger_roles(member.guild.id, res[1]):
+                    elif res[1] in await self.bot.db.get_code_trigger_list(member.guild.id):
                         roles = await self.bot.db.get_code_trigger_roles(member.guild.id, res[1])
                         target_role = []
                         for role_id in roles:
