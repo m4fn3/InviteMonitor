@@ -27,12 +27,6 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         if ctx.author.id != 513136168112750593:
             raise Exception("Developer-Admin-Error")
 
-    async def cog_command_error(self, ctx, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            await ctx.send(f"引数が足りません。\nエラー詳細:\n{error}")
-        else:
-            await ctx.send(f"エラーが発生しました:\n{error}")
-
     def cleanup_code(self, content):
         # remove ```py\n```
         if content.startswith('```') and content.endswith('```'):
