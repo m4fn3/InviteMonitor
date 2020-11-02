@@ -119,8 +119,6 @@ class InviteMonitor(commands.Bot):
         else:
             return 1
 
-    # TODO: trigger動作確認
-
     @identifier.debugger
     async def find_send(self, guild: discord.Guild, content: str = "", embed: Optional[discord.Embed] = None, try_owner: bool = False):
         args = {}
