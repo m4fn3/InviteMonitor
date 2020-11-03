@@ -207,6 +207,7 @@ class Invite(commands.Cog):
             return None  # 何らかの問題で,変更点が見つからなかった場合
 
     @commands.command(aliases=["inv"], usage="invite (@bot)", brief="Get bot's invite link", description="Show invite link of the bot. If some bot mentioned, send invite link of those.")
+    @commands.cooldown(1, 3, commands.BucketType.guild)
     async def invite(self, ctx):
         if not ctx.message.mentions:  # メンションがない場合、このBOTの招待リンクを表示
             embed = discord.Embed(title="Invite links", color=0xffa8ff)
@@ -232,7 +233,7 @@ class Invite(commands.Cog):
 
     @identifier.is_has_manage_roles()
     @commands.group(usage="code_trigger", aliases=["ct"], brief="Auto role with used code", description="Manage triggers that give specific role to participant who joined with specific invite code.")
-    @identifier.debugger
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def code_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="Code Triggers", color=0xa8a8ff)
@@ -253,7 +254,7 @@ class Invite(commands.Cog):
             await ctx.send(embed=embed)
 
     @code_trigger.command(name="add", usage="user_trigger add [invite code] [@role]", description="Add new trigger. (If participant joined with [invite code], then give [@role])")
-    @commands.cooldown(1, 5, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
     async def code_trigger_add(self, ctx, code, *, role):
         # 数を確認
         if await self.bot.db.get_code_trigger_count(ctx.guild.id) == 5:
@@ -278,7 +279,7 @@ class Invite(commands.Cog):
         await success_embed_builder(ctx, "Code trigger has created successfully!")
 
     @code_trigger.command(name="remove", usage="user_trigger remove [index]", description="Remove exist trigger.", aliases=["delete", "del"])
-    @commands.cooldown(1, 5, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
     async def code_trigger_remove(self, ctx, index):
         count = await self.bot.db.get_code_trigger_count(ctx.guild.id)
         if count == 0:
@@ -292,6 +293,7 @@ class Invite(commands.Cog):
 
     @identifier.is_has_manage_roles()
     @commands.group(usage="user_trigger", aliases=["ut"], brief="Auto role with inviter", description="Manage triggers that give specific roles to participant who invited by specific user.")
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def user_trigger(self, ctx):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(title="User triggers", color=0xa8a8ff)
@@ -307,7 +309,7 @@ class Invite(commands.Cog):
             await ctx.send(embed=embed)
 
     @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. (If participant was invited by [@user], then give [@role])")
-    @commands.cooldown(1, 5, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
     async def user_trigger_add(self, ctx, user, *, role):
         # 数を確認
         if len(await self.bot.db.get_user_trigger_count(ctx.guild.id)) == 5:
@@ -332,7 +334,7 @@ class Invite(commands.Cog):
         await success_embed_builder(ctx, "User trigger has created successfully!")
 
     @user_trigger.command(name="remove", usage="user_trigger remove [index]", description="Delete exist trigger.", aliases=["delete", "del"])
-    @commands.cooldown(1, 5, commands.BucketType.guild)
+    @commands.cooldown(1, 10, commands.BucketType.guild)
     async def user_trigger_remove(self, ctx, index):
         count = await self.bot.db.get_user_trigger_count(ctx.guild.id)
         if count == 0:

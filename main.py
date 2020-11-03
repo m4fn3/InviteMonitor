@@ -77,6 +77,8 @@ class InviteMonitor(commands.Bot):
         embed.description = f"To get started, simply type `{self.PREFIX}enable #channel`\nSince then monitor logs will be sent to the channel!\n\nIf you need help, please contact on [Support Server]({bot.static_data.server})"
         embed.set_footer(icon_url="https://cdn.discordapp.com/emojis/769855038964891688.png", text="I hope you will enjoy the bot:)")
         await self.find_send(guild, embed=embed)
+        # ステータス変更
+        await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
     async def on_guild_remove(self, guild):
         """BOT自身がサーバーを退出した際のイベント"""
@@ -84,6 +86,8 @@ class InviteMonitor(commands.Bot):
         await self.db.disable_guild(guild.id)
         if guild.id in self.cache:
             del self.cache[guild.id]
+        # ステータス変更
+        await self.change_presence(status=discord.Status.online, activity=discord.Game(f"{self.PREFIX}help | {len(self.guilds)}servers\n"))
 
     async def on_message(self, message):
         """メッセージを受け取った際のイベント"""

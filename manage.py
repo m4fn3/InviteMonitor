@@ -44,7 +44,7 @@ class Manage(commands.Cog):
 
     @identifier.is_has_kick_members()
     @commands.command(usage="kick [@user]", brief="Kick and wipe their invite", description="Kick the mentioned user and delete invites made by that user.")
-    @commands.cooldown(1, 10, commands.BucketType.guild)
+    @commands.cooldown(3, 15, commands.BucketType.guild)
     async def kick(self, ctx, *, condition):
         error_log = ""
         target_users = set()
@@ -70,7 +70,7 @@ class Manage(commands.Cog):
 
     @identifier.is_has_ban_members()
     @commands.command(usage="ban [@user]", brief="Ban and wipe their invite", description="Ban the mentioned user and delete invites made by that user.")
-    @commands.cooldown(1, 10, commands.BucketType.guild)
+    @commands.cooldown(3, 15, commands.BucketType.guild)
     async def ban(self, ctx, *, condition):
         error_log = ""
         target_users = set()

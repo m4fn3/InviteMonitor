@@ -27,6 +27,7 @@ class Setting(commands.Cog):
 
     @identifier.is_has_manage()
     @commands.command(usage="enable (#channel)", brief="Start monitoring", description="Start monitor invites and report logs to specified channel. If no channel provided, set to channel command executed.")
+    @commands.cooldown(1, 10, commands.BucketType.guild)
     async def enable(self, ctx):
         # 対象チャンネルを取得
         target_channel: discord.TextChannel
@@ -45,6 +46,7 @@ class Setting(commands.Cog):
 
     @identifier.is_has_manage()
     @commands.command(usage="disable", brief="Stop monitoring", description="Stop monitoring and reporting information in the server.")
+    @commands.cooldown(1, 10, commands.BucketType.guild)
     async def disable(self, ctx):
         # 有効化されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
@@ -55,7 +57,7 @@ class Setting(commands.Cog):
             del self.bot.cache[ctx.guild.id]  # 招待キャッシュの削除
 
     @commands.command(aliases=["st"], brief="See cached status", usage="status (@user)", description="Show user's data includes inviter and invite counts. If no user mentioned, server status will be shown.")
-    @identifier.debugger
+    @commands.cooldown(1, 3, commands.BucketType.guild)
     async def status(self, ctx):
         # そのサーバーでログが設定されているか確認
         if not await self.bot.db.is_enabled_guild(ctx.guild.id):
@@ -98,6 +100,7 @@ class Setting(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.command(aliases=["info"], usage="about", brief="About the bot", description="Show the information about the bot.")
+    @commands.cooldown(1, 3, commands.BucketType.guild)
     async def about(self, ctx):
         embed = discord.Embed(title=f"About {self.bot.user.name}", color=0xffffa8)
         embed.description = f"**Thank you for using {self.bot.user.name}!**\n{self.bot.user.name} is strong server monitoring bot that allows you to protects your server from malicious users and keep safety!\n\n"
