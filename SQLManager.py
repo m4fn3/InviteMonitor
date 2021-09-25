@@ -5,15 +5,20 @@ import asyncpg
 
 
 class SQLManager:
-    def __init__(self, database_url: str, bot_loop):
+    def __init__(self, name: str, user: str, password: str, bot_loop):
         self.loop = bot_loop
         self.con = None
-        self.database_url = database_url
+        self.database_name = name
+        self.database_user = user
+        self.database_password = password
 
     # Connection
     async def connect(self) -> asyncpg.connection:
         """データベースに接続"""
-        self.con = await asyncpg.create_pool(self.database_url, loop=self.loop)
+        self.con = await asyncpg.create_pool(
+            user=self.database_user, database=self.database_name, password=self.database_password,
+            loop=self.loop
+        )
 
     def is_connected(self) -> bool:
         """データベースに接続しているか確認"""
@@ -64,7 +69,8 @@ class SQLManager:
 
     async def get_guild_users_count(self, guild_id: int) -> int:
         """サーバーが認識しているユーザー数を取得"""
-        res = await self.con.fetchrow("SELECT count(keys) FROM (SELECT jsonb_object_keys(users) AS keys FROM server WHERE id = $1)r ;", guild_id)
+        res = await self.con.fetchrow(
+            "SELECT count(keys) FROM (SELECT jsonb_object_keys(users) AS keys FROM server WHERE id = $1)r ;", guild_id)
         if res is None or res["count"] is None:
             return 0
         else:
@@ -72,7 +78,9 @@ class SQLManager:
 
     async def get_guild_users(self, guild_id: int) -> list:
         """保存されているユーザーのリストを取得"""
-        res = await self.con.fetchrow("SELECT array_agg(keys) FROM (SELECT jsonb_object_keys(users) AS keys FROM server WHERE id = $1)r ;", guild_id)
+        res = await self.con.fetchrow(
+            "SELECT array_agg(keys) FROM (SELECT jsonb_object_keys(users) AS keys FROM server WHERE id = $1)r ;",
+            guild_id)
         if res is None or res["array_agg"] is None:
             return []
         else:
@@ -112,7 +120,9 @@ class SQLManager:
 
     async def get_code_trigger_count(self, guild_id: int) -> int:
         """招待コードトリガーの数を取得"""
-        res = await self.con.fetchrow("select count(keys) from (select jsonb_object_keys(code_trigger) as keys from server where id = $1)r ;", guild_id)
+        res = await self.con.fetchrow(
+            "select count(keys) from (select jsonb_object_keys(code_trigger) as keys from server where id = $1)r ;",
+            guild_id)
         if res is None or res["count"] is None:
             return 0
         else:
@@ -128,7 +138,9 @@ class SQLManager:
 
     async def add_code_trigger(self, guild_id: int, code: str, roles: list) -> None:
         # UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2 # [code_trigger][code] = roles
-        await self.con.execute("UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2" % code, json.dumps(roles), guild_id)
+        await self.con.execute(
+            "UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2" % code,
+            json.dumps(roles), guild_id)
 
     async def remove_code_trigger(self, guild_id: int, code: str) -> None:
         """招待コードトリガーから設定されているコードを削除"""
@@ -153,7 +165,9 @@ class SQLManager:
 
     async def get_user_trigger_count(self, guild_id: int) -> int:
         """ユーザートリガーの数を取得"""
-        res = await self.con.fetchrow("select count(keys) from (select jsonb_object_keys(user_trigger) as keys from server where id = $1)r ;", guild_id)
+        res = await self.con.fetchrow(
+            "select count(keys) from (select jsonb_object_keys(user_trigger) as keys from server where id = $1)r ;",
+            guild_id)
         if res is None or res["count"] is None:
             return 0
         else:
@@ -161,7 +175,8 @@ class SQLManager:
 
     async def get_user_trigger_roles(self, guild_id: int, user_id: int) -> list:
         """ユーザートリガーに設定されている役職のリストを取得"""
-        res = await self.con.fetchrow("SELECT user_trigger->>$1 AS f FROM server WHERE id = $2;", str(user_id), guild_id)
+        res = await self.con.fetchrow("SELECT user_trigger->>$1 AS f FROM server WHERE id = $2;", str(user_id),
+                                      guild_id)
         if res is None or res["f"] is None or res["f"] == "null":
             return []
         else:
@@ -169,7 +184,9 @@ class SQLManager:
 
     async def add_user_trigger(self, guild_id: int, user_id: int, roles: list) -> None:
         # UPDATE SERVER SET code_trigger = jsonb_set(code_trigger, '{%s}', $1::jsonb) where id = $2 # [user_trigger][user_id] = roles
-        await self.con.execute("UPDATE SERVER SET user_trigger = jsonb_set(user_trigger, '{%d}', $1::jsonb) where id = $2" % user_id, json.dumps(roles), guild_id)
+        await self.con.execute(
+            "UPDATE SERVER SET user_trigger = jsonb_set(user_trigger, '{%d}', $1::jsonb) where id = $2" % user_id,
+            json.dumps(roles), guild_id)
 
     async def remove_user_trigger(self, guild_id: int, user: int) -> None:
         """ユーザートリガーから設定されているコードを削除"""
@@ -187,7 +204,8 @@ class SQLManager:
         if res is not None and dict(res)["f"] is not None and invited in json.loads(dict(res)["f"]):
             return  # 既にユーザーが追加されている場合は終了
         # UPDATE server SET users = jsonb_insert(users, '{%d, to, 0}', $1) // users[inviter][to]にある配列にinvitedを追加
-        await self.con.execute("UPDATE server SET users = jsonb_insert(users, '{%d, to, 0}', $1)" % inviter, str(invited))
+        await self.con.execute("UPDATE server SET users = jsonb_insert(users, '{%d, to, 0}', $1)" % inviter,
+                               str(invited))
 
     async def add_inviter_to_invited(self, guild_id: int, inviter: int, invited: int) -> None:
         """招待元ユーザーデータを招待された人のデータに追加"""
@@ -208,15 +226,18 @@ class SQLManager:
     async def register_new_user(self, guild_id: int, user_id: int) -> None:
         """新規ユーザーデータを追加"""
         init_data = {user_id: {"to": [], "from": None, "code": None, "uid": user_id}}
-        await self.con.execute("UPDATE server SET users = users||$1::jsonb WHERE id = $2", json.dumps(init_data), guild_id)
+        await self.con.execute("UPDATE server SET users = users||$1::jsonb WHERE id = $2", json.dumps(init_data),
+                               guild_id)
 
     async def reset_user_data(self, guild_id: int, user_id: int):
         """既存ユーザーデータをクリア"""
-        await self.con.execute("UPDATE SERVER SET users = jsonb_set(users, '{%d, to}', '[]'::jsonb) where id = $1" % user_id, guild_id)
+        await self.con.execute(
+            "UPDATE SERVER SET users = jsonb_set(users, '{%d, to}', '[]'::jsonb) where id = $1" % user_id, guild_id)
 
     async def get_user_invite_count(self, guild_id: int, user_id: int) -> int:
         """特定ユーザーの招待数を取得"""
-        res = await self.con.fetchrow("SELECT jsonb_array_length(users#>'{%d, to}') FROM server WHERE id = $1;" % user_id, guild_id)
+        res = await self.con.fetchrow(
+            "SELECT jsonb_array_length(users#>'{%d, to}') FROM server WHERE id = $1;" % user_id, guild_id)
         if res is None or res["jsonb_array_length"] is None:
             return 0
         else:
@@ -264,7 +285,8 @@ class SQLManager:
                 sql += from_sql
         id_list = set()
         # SELECT jsonb_path_query(users, '$.* ? (%s)') FROM server; ... 任意のキー内の条件に合う値を取得
-        res = await self.con.fetch("SELECT jsonb_path_query(users, '$.* ? (%s)') FROM server where id = $1;" % sql, guild_id)
+        res = await self.con.fetch("SELECT jsonb_path_query(users, '$.* ? (%s)') FROM server where id = $1;" % sql,
+                                   guild_id)
         for record in res:
             id_list.add(json.loads(record['jsonb_path_query'])["uid"])
         return id_list
