@@ -65,8 +65,8 @@ class Setting(commands.Cog):
         if not ctx.message.mentions:
             # 設定を取得
             embed = discord.Embed(color=0xd3a8ff)
-            embed.set_author(name=f"{ctx.guild.name}", icon_url=ctx.guild.icon_url)
-            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.set_author(name=f"{ctx.guild.name}", icon_url=ctx.guild.icon.url)
+            embed.set_thumbnail(url=ctx.guild.icon.url)
             embed.description = f"Cached status of the server **{ctx.guild.name}**\n\n"
             embed.description += f"`LogChannel :`  <#{await self.bot.db.get_log_channel_id(ctx.guild.id)}>\n"
             embed.description += f"`Member     :`  {len(ctx.guild.members)}\n"

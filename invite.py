@@ -113,7 +113,7 @@ class Invite(commands.Cog):
                 embed.timestamp, delta = self.get_delta_time(member.created_at, with_warn=True)
                 # ログを送信
                 embed.description += f"`Created :` {delta} ago"
-                embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
+                embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon.url)
                 await self.bot.log_send(member.guild, embed=embed)
                 # UserTriggerを確認
                 if res is None:  # 招待を認識できなかった場合
@@ -184,7 +184,7 @@ class Invite(commands.Cog):
                 # 滞在した時間を何時間経過したかで表示
                 embed.timestamp, delta = self.get_delta_time(member.joined_at)
                 embed.description += f"`Stayed  :`  {delta}"
-                embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon_url)
+                embed.set_footer(text=f"{member.guild.name} | {len(member.guild.members)}members", icon_url=member.guild.icon.url)
                 await self.bot.log_send(member.guild, embed=embed)
             else:  # 権限不足エラー
                 await self.bot.perm_lack_reporter(member.guild, ["manage_guild", "manage_channels"])
@@ -250,7 +250,7 @@ class Invite(commands.Cog):
                 else:
                     ex_invite = "RbzSSrw"
                 embed.description += f"\n\n**No triggers here! To get started:**\n{self.bot.PREFIX}code_trigger add [code] [roles]\n**For example:**\n{self.bot.PREFIX}code_trigger add {ex_invite} {ctx.guild.roles[-1].mention if ctx.guild.roles else '@new_role'}\n\n{self.bot.PREFIX}help code_trigger to learn more."
-            embed.set_footer(text=f"Total {count - 1} code triggers in {ctx.guild.name}", icon_url=ctx.guild.icon_url)
+            embed.set_footer(text=f"Total {count - 1} code triggers in {ctx.guild.name}", icon_url=ctx.guild.icon.url)
             await ctx.send(embed=embed)
 
     @code_trigger.command(name="add", usage="user_trigger add [invite code] [@role]", description="Add new trigger. (If participant joined with [invite code], then give [@role])")
@@ -305,7 +305,7 @@ class Invite(commands.Cog):
                 count += 1
             if count == 1:
                 embed.description += f"\n\n**No triggers here! To get started:**\n{self.bot.PREFIX}user_trigger add [user] [roles]\n**For example:**\n{self.bot.PREFIX}user_trigger add {self.bot.user.mention} {ctx.guild.roles[-1].mention if ctx.guild.roles else '@new_role'}\n\n{self.bot.PREFIX}help user_trigger to learn more."
-            embed.set_footer(text=f"Total {count - 1} user triggers | {ctx.guild.name}", icon_url=ctx.guild.icon_url)
+            embed.set_footer(text=f"Total {count - 1} user triggers | {ctx.guild.name}", icon_url=ctx.guild.icon.url)
             await ctx.send(embed=embed)
 
     @user_trigger.command(name="add", usage="user_trigger add [@user] [@role]", description="Add new trigger. (If participant was invited by [@user], then give [@role])")
