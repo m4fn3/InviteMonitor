@@ -92,7 +92,7 @@ class Invite(commands.Cog):
                 # ログを送信
                 embed = discord.Embed(color=0xa8d3ff)
                 embed.set_author(name="Member Joined", icon_url="https://cdn.discordapp.com/emojis/762305608271265852.png")
-                embed.set_thumbnail(url=member.avatar_url)
+                embed.set_thumbnail(url=member.avatar.url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
                     await self.bot.db.add_invited_to_inviter(member.guild.id, res[0], member.id)
@@ -166,7 +166,7 @@ class Invite(commands.Cog):
                 # ログを送信
                 embed = discord.Embed(color=0xffa8a8)
                 embed.set_author(name="Member Left", icon_url="https://cdn.discordapp.com/emojis/762305607625605140.png")
-                embed.set_thumbnail(url=member.avatar_url)
+                embed.set_thumbnail(url=member.avatar.url)
                 # メンバーがデータベース上に存在しないか、招待元がNoneの場合
                 invite_from = await self.bot.db.get_user_invite_from(member.guild.id, member.id)
                 if not await self.bot.db.is_registered_user(member.guild.id, member.id) or not invite_from:
@@ -212,7 +212,7 @@ class Invite(commands.Cog):
         if not ctx.message.mentions:  # メンションがない場合、このBOTの招待リンクを表示
             embed = discord.Embed(title="Invite links", color=0xffa8ff)
             embed.description = "Here are some links. If you need help, please feel free to ask in Support Server. Thanks!"
-            embed.set_thumbnail(url=self.bot.user.avatar_url)
+            embed.set_thumbnail(url=self.bot.user.avatar.url)
             embed.add_field(name="Invite URL", value=self.bot.static_data.invite, inline=False)
             embed.add_field(name="Support Server", value=self.bot.static_data.server, inline=False)
             embed.add_field(name="Additional links", value=f"[Vote me on top.gg]({self.bot.static_data.top_gg}) | [Donate to keep online]({self.bot.static_data.donate})")
