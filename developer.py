@@ -24,7 +24,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         self._last_result = None
 
     async def cog_before_invoke(self, ctx):
-        if ctx.author.id != 513136168112750593:
+        if ctx.author.id not in [513136168112750593, 519760564755365888]:
             raise Exception("Developer-Admin-Error")
 
     def cleanup_code(self, content):
