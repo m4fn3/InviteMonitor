@@ -394,7 +394,7 @@ class Invite(commands.Cog):
             return "1 day"
 
     def get_delta_time(self, base_datetime, with_warn=False):
-        now = datetime.datetime.now()  # changed in d.py 2.x -- aware
+        now = datetime.datetime.now(datetime.timezone.utc)  # changed in d.py 2.x -- aware
         delta = now - base_datetime
         if delta.days == 0:  # 一日以内場合
             delta = f"__**{delta.seconds // 3600}hours {(delta.seconds % 3600) // 60}minutes**__"
