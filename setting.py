@@ -77,8 +77,8 @@ class Setting(commands.Cog):
         else:
             target_user = ctx.message.mentions[0]
             embed = discord.Embed(color=0xd3a8ff)
-            embed.set_author(name=f"{str(target_user)}", icon_url=target_user.avatar.url)
-            embed.set_thumbnail(url=target_user.avatar.url)
+            embed.set_author(name=f"{str(target_user)}", icon_url=target_user.display_avatar.url)
+            embed.set_thumbnail(url=target_user.display_avatar.url)
             embed.description = f"Cached data of <@{target_user.id}>\n\n"
             if str(target_user.id) in await self.bot.db.get_guild_users(ctx.guild.id):
                 embed.description += f"`InviteCount:`  {await self.bot.db.get_user_invite_count(ctx.guild.id, target_user.id)}\n"

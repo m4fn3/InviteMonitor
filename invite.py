@@ -91,7 +91,7 @@ class Invite(commands.Cog):
                 # ログを送信
                 embed = discord.Embed(color=0xa8d3ff)
                 embed.set_author(name="Member Joined", icon_url="https://cdn.discordapp.com/emojis/762305608271265852.png")
-                embed.set_thumbnail(url=member.avatar.url)
+                embed.set_thumbnail(url=member.display_avatar.url)
                 if res is not None:  # ユーザーが判別できた場合
                     # 招待作成者の招待履歴に記録
                     await self.bot.db.add_invited_to_inviter(member.guild.id, res[0], member.id)
@@ -165,7 +165,7 @@ class Invite(commands.Cog):
                 # ログを送信
                 embed = discord.Embed(color=0xffa8a8)
                 embed.set_author(name="Member Left", icon_url="https://cdn.discordapp.com/emojis/762305607625605140.png")
-                embed.set_thumbnail(url=member.avatar.url)
+                embed.set_thumbnail(url=member.display_avatar.url)
                 # メンバーがデータベース上に存在しないか、招待元がNoneの場合
                 invite_from = await self.bot.db.get_user_invite_from(member.guild.id, member.id)
                 if not await self.bot.db.is_registered_user(member.guild.id, member.id) or not invite_from:
