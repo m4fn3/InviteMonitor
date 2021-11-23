@@ -1,5 +1,4 @@
-discord.py== 1.5.0
-discord== 1.0.1
+nextcord
 psutil
 asyncio
 traceback2

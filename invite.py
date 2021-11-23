@@ -2,7 +2,6 @@ import datetime
 import re
 
 import discord
-import pytz
 from discord.ext import commands
 
 import identifier
@@ -395,8 +394,8 @@ class Invite(commands.Cog):
             return "1 day"
 
     def get_delta_time(self, base_datetime, with_warn=False):
-        now = datetime.datetime.now(datetime.timezone.utc)  # JST -> UTC
-        delta = now - pytz.timezone('UTC').localize(base_datetime)  # native -> aware(UTC)
+        now = datetime.datetime.now()  # changed in d.py 2.x -- aware
+        delta = now - base_datetime
         if delta.days == 0:  # 一日以内場合
             delta = f"__**{delta.seconds // 3600}hours {(delta.seconds % 3600) // 60}minutes**__"
             if with_warn:
